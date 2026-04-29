@@ -1,6 +1,6 @@
 # 🌱 Smart Crop Yield Prediction System
 
-A machine learning-based system for predicting agricultural crop yields using environmental and soil parameters. This project demonstrates a complete ML pipeline with fair data preprocessing, balanced training, and realistic evaluation.
+A machine learning-based simple system for predicting agricultural crop yields using environmental and soil parameters. This project demonstrates a complete ML pipeline with fair data preprocessing, balanced training, and realistic evaluation.
 
 ## 🎯 Features
 
