@@ -221,7 +221,7 @@ class CropYieldModel:
         6. Evaluation on original unbalanced test data
         """
         print("\n" + "="*70)
-        print("🚀 STARTING ML PIPELINE FOR CROP YIELD PREDICTION")
+        print("STARTING ML PIPELINE FOR CROP YIELD PREDICTION")
         print("="*70 + "\n")
         
         try:
@@ -245,7 +245,7 @@ class CropYieldModel:
             if missing_cols:
                 raise ValueError(f"Dataset is missing required columns: {missing_cols}")
             
-            print(f"  ✓ All required columns present: {required_cols}")
+            print(f"  [OK] All required columns present: {required_cols}")
             
             # Step 4: Train-Test Split (80% training, 20% testing)
             print(f"\n[Step 4] Splitting data into train (80%) and test (20%)...")
@@ -261,15 +261,15 @@ class CropYieldModel:
             # Step 5: Balanced Sampling - ONLY on training data
             print(f"\n[Step 5] Applying balanced sampling ONLY on training data...")
             X_train_balanced, y_train_balanced = self.balance_training_data(X_train, y_train)
-            print(f"  ✓ Balanced training size: {len(X_train_balanced)} samples")
-            print(f"  ✓ Test set remains unchanged: {len(X_test)} samples")
+            print(f"  [OK] Balanced training size: {len(X_train_balanced)} samples")
+            print(f"  [OK] Test set remains unchanged: {len(X_test)} samples")
             
             # Step 6: Model Training
             print(f"\n[Step 6] Training RandomForestRegressor...")
             print(f"  Model hyperparameters: n_estimators=100, random_state=42")
             self.pipeline.fit(X_train_balanced, y_train_balanced)
             self.is_trained = True
-            print(f"  ✓ Model training completed")
+            print(f"  [OK] Model training completed")
             
             # Step 7: Evaluation on original (unbalanced) test data
             print(f"\n[Step 7] Evaluating on original UNBALANCED test data...")
@@ -286,19 +286,19 @@ class CropYieldModel:
             
             # Summary
             print(f"\n" + "="*70)
-            print(f"✅ ML PIPELINE COMPLETED SUCCESSFULLY")
+            print(f"SUCCESS: ML PIPELINE COMPLETED SUCCESSFULLY")
             print("="*70)
             print(f"Summary:")
-            print(f"  • Data points processed: {len(df)}")
-            print(f"  • Training samples (balanced): {len(X_train_balanced)}")
-            print(f"  • Test samples (original): {len(X_test)}")
-            print(f"  • Model performance on test set:")
+            print(f"  - Data points processed: {len(df)}")
+            print(f"  - Training samples (balanced): {len(X_train_balanced)}")
+            print(f"  - Test samples (original): {len(X_test)}")
+            print(f"  - Model performance on test set:")
             print(f"    - RMSE: {rmse:.4f}")
             print(f"    - R²: {r2:.4f}")
             print("="*70 + "\n")
             
         except Exception as e:
-            print(f"\n❌ Error in ML Pipeline: {str(e)}")
+            print(f"\nError in ML Pipeline: {str(e)}")
             print("  Fallback: Initializing with dummy data for API stability...")
             self._train_dummy()
 
@@ -316,6 +316,12 @@ class CropYieldModel:
             'area': [10.0, 20.0, 15.0, 25.0, 12.0, 18.0],
             'state': ['StateA', 'StateB', 'StateA', 'StateB', 'StateA', 'StateB'],
             'crop': ['Rice', 'Wheat', 'Rice', 'Wheat', 'Rice', 'Wheat'],
+            'district': ['Dist1', 'Dist2', 'Dist1', 'Dist2', 'Dist1', 'Dist2'],
+            'production': [100.0, 200.0, 150.0, 300.0, 120.0, 250.0],
+            'year': [2024, 2024, 2024, 2024, 2024, 2024],
+            'productivity_index': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            'seasonal_factor': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            'district_factor': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
             'yield': [150.0, 250.0, 200.0, 350.0, 180.0, 280.0]
         }
         df = pd.DataFrame(dummy_data)
