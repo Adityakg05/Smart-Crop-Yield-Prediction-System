@@ -520,13 +520,19 @@ body {
 
 .form-group input,
 .form-group select {
-    padding: 0.8rem 1rem;
-    border: 1px solid #ddd;
-    border-radius: 12px;
+    padding: 0.9rem 1.1rem;
+    border: 1.5px solid transparent;
+    border-radius: 14px;
     font-family: inherit;
     font-size: 0.95rem;
     transition: var(--transition);
-    background: #fafafa;
+    background: rgba(82, 183, 136, 0.12);
+    color: var(--dark);
+}
+
+.form-group input:hover,
+.form-group select:hover {
+    background: rgba(82, 183, 136, 0.18);
 }
 
 .form-group input:focus,
@@ -534,7 +540,8 @@ body {
     outline: none;
     border-color: var(--accent-green);
     background: var(--white);
-    box-shadow: 0 0 0 3px rgba(82, 183, 136, 0.2);
+    box-shadow: 0 0 0 4px rgba(82, 183, 136, 0.2);
+    transform: translateY(-1px);
 }
 
 .btn-full {
