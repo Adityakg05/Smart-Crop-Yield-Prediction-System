@@ -255,6 +255,7 @@
         </div>
     </div>
 
+    <script src="script.js"></script>
     <script>
         function switchTab(tab) {
             document.querySelectorAll('.form-section').forEach(el => el.classList.remove('active'));
@@ -262,60 +263,6 @@
             
             document.getElementById(tab).classList.add('active');
             event.target.classList.add('active');
-        }
-
-        function showAlert(message, type, tabId) {
-            const alertEl = document.getElementById(`${tabId}-alert`);
-            alertEl.textContent = message;
-            alertEl.className = `alert show alert-${type}`;
-            setTimeout(() => alertEl.classList.remove('show'), 5000);
-        }
-
-        function handleLogin(event) {
-            event.preventDefault();
-            
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-
-            const users = JSON.parse(localStorage.getItem('users') || '[]');
-            const user = users.find(u => u.email === email && u.password === password);
-
-            if (user) {
-                localStorage.setItem('currentUser', JSON.stringify(user));
-                showAlert('✓ Login successful! Redirecting...', 'success', 'login');
-                setTimeout(() => window.location.href = 'dashboard.html', 1500);
-            } else {
-                showAlert('✗ Invalid email or password', 'error', 'login');
-            }
-        }
-
-        function handleSignup(event) {
-            event.preventDefault();
-            
-            const name = document.getElementById('signup-name').value;
-            const email = document.getElementById('signup-email').value;
-            const password = document.getElementById('signup-password').value;
-            const confirm = document.getElementById('signup-confirm').value;
-
-            if (password !== confirm) {
-                showAlert('✗ Passwords do not match', 'error', 'signup');
-                return;
-            }
-
-            const users = JSON.parse(localStorage.getItem('users') || '[]');
-            if (users.find(u => u.email === email)) {
-                showAlert('✗ Email already registered', 'error', 'signup');
-                return;
-            }
-
-            users.push({ name, email, password });
-            localStorage.setItem('users', JSON.stringify(users));
-            showAlert('✓ Account created! Logging in...', 'success', 'signup');
-            
-            setTimeout(() => {
-                localStorage.setItem('currentUser', JSON.stringify({ name, email }));
-                window.location.href = 'dashboard.html';
-            }, 1500);
         }
     </script>
 </body>

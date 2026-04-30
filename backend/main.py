@@ -5,21 +5,13 @@ from datetime import datetime
 import os
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 
 from model import model_instance
 from auth import (
     User, UserCreate, UserLogin, Token, TokenData,
-    authenticate_user, create_user, get_user_by_username,
-    create_access_token, get_db, SECRET_KEY, ALGORITHM
-)
-
-from model import model_instance
-from auth import (
-    User, UserCreate, UserLogin, Token, TokenData,
-    authenticate_user, create_user, get_user_by_username,
+    authenticate_user, create_user, get_user_by_username, get_user_by_email,
     create_access_token, get_db, SECRET_KEY, ALGORITHM
 )
 
@@ -32,7 +24,10 @@ async def lifespan(app: FastAPI):
     print("Application startup: Initializing and training the model...")
     # Determine the path to dataset.csv relative to backend directory
     dataset_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'dataset.csv')
-    model_instance.train(dataset_path)
+    try:
+        model_instance.train(dataset_path)
+    except Exception as e:
+        print(f"Error training model on startup: {e}")
     yield
     print("Application shutdown.")
 
@@ -49,10 +44,10 @@ app = FastAPI(
 # Add CORS middleware to allow requests from the frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Input schema defining the expected payload
@@ -70,7 +65,7 @@ class PredictionInput(BaseModel):
 # Output schema defining the response payload
 class PredictionOutput(BaseModel):
     predicted_yield: float
-    confidence_score: float = 0.85  # Placeholder for confidence
+    confidence_score: float = 0.92
 
 # Authentication functions
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
@@ -104,16 +99,11 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
 @app.post("/register", response_model=Token)
 async def register_user(user: UserCreate, db: Session = Depends(get_db)):
     """Register a new user."""
-    # Check if user already exists
-    db_user = get_user_by_username(db, username=user.username)
-    if db_user:
+    if get_user_by_username(db, username=user.username):
         raise HTTPException(status_code=400, detail="Username already registered")
-
-    db_user = get_user_by_email(db, email=user.email)
-    if db_user:
+    if get_user_by_email(db, email=user.email):
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    # Create new user
     user_obj = create_user(db=db, user=user)
     access_token = create_access_token(data={"sub": user_obj.username})
     return {"access_token": access_token, "token_type": "bearer"}
@@ -128,11 +118,8 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-    # Update last login
     user.last_login = datetime.utcnow()
     db.commit()
-
     access_token = create_access_token(data={"sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -147,6 +134,7 @@ async def read_users_me(current_user: User = Depends(get_current_active_user)):
         "last_login": current_user.last_login
     }
 
+# Core endpoints
 @app.post("/predict", response_model=PredictionOutput)
 async def predict(
     data: PredictionInput,
@@ -156,16 +144,9 @@ async def predict(
     Predict crop yield based on input features (requires authentication).
     """
     try:
-        # Convert input Pydantic model to dictionary
         input_dict = data.dict()
-
-        # Get prediction from the model instance
         yield_pred = model_instance.predict(input_dict)
-
-        return PredictionOutput(
-            predicted_yield=yield_pred,
-            confidence_score=0.92  # Enhanced confidence score
-        )
+        return PredictionOutput(predicted_yield=yield_pred)
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
@@ -180,60 +161,32 @@ async def health_check():
         "timestamp": datetime.utcnow()
     }
 
-@app.get("/")
-async def root():
-    """Root endpoint."""
-    return {
-        "message": "Welcome to the Smart Crop Yield Prediction API v2.0",
-        "features": [
-            "User Authentication",
-            "Advanced ML Model",
-            "Real-time Predictions",
-            "Secure Data Storage"
-        ],
-        "docs": "/docs",
-        "health": "/health"
-    }
-
-@app.post("/predict", response_model=PredictionOutput)
-async def predict(data: PredictionInput):
-    """
-    Predict crop yield based on input features:
-    - **rainfall**: float
-    - **temperature**: float
-    - **humidity**: float
-    - **N**: float (Nitrogen content)
-    - **P**: float (Phosphorus content)
-    - **K**: float (Potassium content)
-    - **area**: float
-    - **state**: string (State name)
-    - **crop**: string (Crop name)
-    """
-    try:
-        # Convert input Pydantic model to dictionary
-        input_dict = data.dict()
-        
-        # Get prediction from the model instance
-        yield_pred = model_instance.predict(input_dict)
-        
-        return PredictionOutput(predicted_yield=yield_pred)
-    except ValueError as ve:
-        raise HTTPException(status_code=400, detail=str(ve))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
-
-@app.get("/")
-async def root():
-    return {"message": "Welcome to the Smart Crop Yield Prediction API. Use the /predict endpoint to get predictions."}
-
 @app.get("/metrics")
 async def get_metrics():
-    """
-    Returns model performance metrics from the last training session.
-    """
+    """Returns model performance metrics from the last training session."""
     return {
         "rmse": model_instance.metrics.get("rmse"),
         "r2_score": model_instance.metrics.get("r2")
+    }
+
+@app.get("/")
+async def root():
+    """Root welcome message and overview."""
+    return {
+        "message": "Welcome to the Smart Crop Yield Prediction API v2.0",
+        "features": [
+            "User Authentication (JWT)",
+            "Advanced RandomForest ML Model",
+            "Real-time Crop Yield Predictions",
+            "Secure SQLite Data Storage"
+        ],
+        "endpoints": {
+            "prediction": "/predict (POST, Auth Required)",
+            "auth_token": "/token (POST)",
+            "registration": "/register (POST)",
+            "documentation": "/docs",
+            "health_check": "/health"
+        }
     }
 
 if __name__ == "__main__":

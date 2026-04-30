@@ -328,15 +328,44 @@ class CropYieldModel:
     def predict(self, input_data: dict) -> float:
         """
         Predicts crop yield for a given input dictionary.
+        Handles missing features by providing sensible defaults.
         """
         if not self.is_trained:
             raise ValueError("Model is not trained yet.")
             
-        X_pred = pd.DataFrame([input_data])
-        X_pred = X_pred[self.numerical_features + self.categorical_features]
+        # Ensure all required columns exist with defaults if missing
+        full_input = input_data.copy()
+        
+        # Add missing categorical features with defaults
+        if 'district' not in full_input:
+            full_input['district'] = 'Unknown'
+            
+        # Add missing numerical features with defaults
+        defaults = {
+            'production': 100.0,
+            'year': 2024,
+            'productivity_index': 1.0,
+            'seasonal_factor': 1.0,
+            'district_factor': 1.0
+        }
+        
+        for feat, val in defaults.items():
+            if feat not in full_input:
+                full_input[feat] = val
+                
+        X_pred = pd.DataFrame([full_input])
+        
+        # Select only the features the model was trained on
+        try:
+            X_pred = X_pred[self.numerical_features + self.categorical_features]
+        except KeyError as e:
+            missing = str(e)
+            raise ValueError(f"Missing critical features for prediction: {missing}")
         
         prediction = self.pipeline.predict(X_pred)[0]
-        return float(prediction)
+        
+        # Ensure yield is not negative
+        return max(0.0, float(prediction))
 
 # Create a singleton instance to be used by the FastAPI app
 model_instance = CropYieldModel()

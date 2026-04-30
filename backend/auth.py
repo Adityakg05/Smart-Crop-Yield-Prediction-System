@@ -3,23 +3,22 @@ Database models and authentication utilities for the Crop Yield Prediction Syste
 """
 
 import os
+import hashlib
 from datetime import datetime, timedelta
 from typing import Optional
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-from passlib.context import CryptContext
 from jose import JWTError, jwt
 from pydantic import BaseModel
 
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Database setup
-DATABASE_URL = "sqlite:///./crop_yield.db"
+DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'crop_yield.db')}"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
-
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWT settings
 SECRET_KEY = "your-secret-key-change-in-production"
@@ -64,11 +63,11 @@ class TokenData(BaseModel):
 # Authentication functions
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+    return hashlib.sha256(plain_password.encode()).hexdigest() == hashed_password
 
 def get_password_hash(password: str) -> str:
     """Hash a password."""
-    return pwd_context.hash(password)
+    return hashlib.sha256(password.encode()).hexdigest()
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     """Create a JWT access token."""

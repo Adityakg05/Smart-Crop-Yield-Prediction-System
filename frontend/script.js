@@ -26,7 +26,10 @@ async function handleLogin(event) {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: `username=${email}&password=${password}`
+            body: new URLSearchParams({
+                'username': email,
+                'password': password
+            })
         });
 
         if (response.ok) {
@@ -40,7 +43,7 @@ async function handleLogin(event) {
             }));
             
             showAlert('✓ Login successful! Redirecting...', 'success', 'login');
-            setTimeout(() => window.location.href = 'modern-dashboard.html', 1500);
+            setTimeout(() => window.location.href = 'index.html', 1500);
         } else {
             showAlert('✗ Invalid email or password', 'error', 'login');
         }
@@ -80,14 +83,20 @@ async function handleSignup(event) {
 
         if (response.ok) {
             const data = await response.json();
-            localStorage.setItem('currentUser', JSON.stringify({
-                name: name,
-                email: email,
-                token: data.access_token
-            }));
             
-            showAlert('✓ Account created! Logging in...', 'success', 'signup');
-            setTimeout(() => window.location.href = 'modern-dashboard.html', 1500);
+            // Verify token is present before storing
+            if (data.access_token) {
+                localStorage.setItem('currentUser', JSON.stringify({
+                    name: name,
+                    email: email,
+                    token: data.access_token
+                }));
+                
+                showAlert('✓ Account created! Logging in...', 'success', 'signup');
+                setTimeout(() => window.location.href = 'index.html', 1500);
+            } else {
+                showAlert('✗ Authentication error: No token received', 'error', 'signup');
+            }
         } else {
             const error = await response.json();
             showAlert('✗ ' + (error.detail || 'Registration failed'), 'error', 'signup');
@@ -144,10 +153,20 @@ async function handlePrediction(event) {
     btn.innerHTML = '<div class="spinner"></div> Predicting...';
 
     try {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        const token = currentUser.token;
+
+        if (!token) {
+            showAlert('✗ Please login to get predictions', 'error');
+            setTimeout(() => window.location.href = 'modern-login.html', 1500);
+            return;
+        }
+
         const response = await fetch(`${API_BASE_URL}/predict`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify(predictionData)
         });
@@ -165,7 +184,7 @@ async function handlePrediction(event) {
         showAlert('✗ Error: ' + error.message, 'error');
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<span>Get Prediction</span>';
+        btn.innerHTML = '<span class="btn-text">Predict Yield</span>';
     }
 }
 
@@ -180,6 +199,9 @@ function displayPredictionResult(result, area) {
         document.getElementById('confidence').textContent = confidence + '%';
         document.getElementById('totalYield').textContent = totalYield.toFixed(2) + ' T';
         resultSection.classList.add('show');
+        
+        // Update charts with current input values
+        updateCharts();
     }
 }
 
@@ -231,6 +253,50 @@ document.addEventListener('DOMContentLoaded', function() {
             userNameEl.textContent = user.name || 'Farmer';
         }
     }
+    
+    // Update auth button if on index.html
+    if (pageName === 'index.html' || pageName === '') {
+        const currentUser = localStorage.getItem('currentUser');
+        const authBtn = document.getElementById('auth-btn');
+        if (currentUser && authBtn) {
+            authBtn.textContent = 'Logout';
+            authBtn.href = '#';
+            authBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                logout();
+            });
+        }
+    }
+
+    // Populate State and Crop Dropdowns
+    const stateSelect = document.getElementById('state');
+    if (stateSelect) {
+        getStateOptions().forEach(state => {
+            const option = document.createElement('option');
+            option.value = state;
+            option.textContent = state;
+            stateSelect.appendChild(option);
+        });
+    }
+
+    const cropSelect = document.getElementById('crop');
+    if (cropSelect) {
+        getCropOptions().forEach(crop => {
+            const option = document.createElement('option');
+            option.value = crop;
+            option.textContent = crop;
+            cropSelect.appendChild(option);
+        });
+    }
+
+    // Initialize Dashboard Charts if canvases exist
+    initCharts();
+
+    // Attach form submit
+    const predictionForm = document.getElementById('prediction-form');
+    if (predictionForm) {
+        predictionForm.addEventListener('submit', handlePrediction);
+    }
 
     // Smooth scrolling for navigation links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -262,10 +328,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }, observerOptions);
 
     document.querySelectorAll('.feature-card, .step').forEach(el => {
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(20px)';
-        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-        observer.observe(el);
+        if (!el.classList.contains('fade-in')) {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        }
     });
 });
 
@@ -296,4 +364,87 @@ function getCropOptions() {
         'Bajra', 'Ragi', 'Groundnut', 'Sunflower', 'Sorghum', 'Mustard',
         'Coconut', 'Tobacco', 'Tea', 'Coffee'
     ];
+}
+
+// Script to handle Chart.js integration and dynamic updates
+let dashboardBarChart = null;
+let dashboardPieChart = null;
+
+const chartColors = {
+    green: '#1B4332',
+    lightGreen: '#52B788',
+    softYellow: '#D8F3DC'
+};
+
+function initCharts() {
+    const barChartCanvas = document.getElementById("barChart");
+    const pieChartCanvas = document.getElementById("pieChart");
+
+    if (!barChartCanvas || !pieChartCanvas) return;
+
+    const barCtx = barChartCanvas.getContext("2d");
+    const pieCtx = pieChartCanvas.getContext("2d");
+
+    dashboardBarChart = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: ["Nitrogen (N)", "Phosphorus (P)", "Potassium (K)"],
+            datasets: [{
+                label: "Nutrients",
+                data: [0, 0, 0],
+                backgroundColor: [chartColors.green, chartColors.lightGreen, chartColors.softYellow],
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+
+    dashboardPieChart = new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ["Rainfall", "Temperature", "Humidity"],
+            datasets: [{
+                data: [1, 1, 1], // Default equal chunks
+                backgroundColor: [chartColors.green, chartColors.lightGreen, chartColors.softYellow],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+}
+
+function updateCharts() {
+    if (!dashboardBarChart || !dashboardPieChart) return;
+
+    // Get input values
+    const n = parseFloat(document.getElementById('N').value) || 0;
+    const p = parseFloat(document.getElementById('P').value) || 0;
+    const k = parseFloat(document.getElementById('K').value) || 0;
+    
+    const rain = parseFloat(document.getElementById('rainfall').value) || 0;
+    const temp = parseFloat(document.getElementById('temperature').value) || 0;
+    const hum = parseFloat(document.getElementById('humidity').value) || 0;
+
+    // Update Bar Chart
+    dashboardBarChart.data.datasets[0].data = [n, p, k];
+    dashboardBarChart.update();
+
+    // Update Pie Chart (we normalize these or just show them relative to each other)
+    dashboardPieChart.data.datasets[0].data = [rain, temp, hum];
+    dashboardPieChart.update();
 }
