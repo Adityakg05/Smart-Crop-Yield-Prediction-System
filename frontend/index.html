@@ -6,7 +6,6 @@
     <title>Smart Crop Yield Prediction System</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <!-- NAVBAR -->
@@ -24,120 +23,132 @@
         </div>
     </nav>
 
-    <!-- Global Alert Container -->
-    <div id="alert" class="alert"></div>
-
-    <!-- DASHBOARD SECTION -->
-    <section class="dashboard-section">
-        <div class="dashboard-container">
-            <!-- LEFT COLUMN: INPUT FORM -->
-            <div class="dashboard-left fade-in">
-                <div class="form-card">
-                    <h2>Crop Prediction Parameters</h2>
-                    <form id="prediction-form" class="modern-form">
-                        <!-- Group: Weather -->
-                        <div class="form-group-section">
-                            <h3><span class="icon">⛅</span> Weather Conditions</h3>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="rainfall">Rainfall (mm)</label>
-                                    <input type="number" id="rainfall" step="any" required placeholder="e.g. 150">
-                                </div>
-                                <div class="form-group">
-                                    <label for="temperature">Temp (°C)</label>
-                                    <input type="number" id="temperature" step="any" required placeholder="e.g. 25">
-                                </div>
-                                <div class="form-group">
-                                    <label for="humidity">Humidity (%)</label>
-                                    <input type="number" id="humidity" step="any" required placeholder="e.g. 60">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Group: Soil -->
-                        <div class="form-group-section">
-                            <h3><span class="icon">🌱</span> Soil Nutrients</h3>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="N">Nitrogen (N)</label>
-                                    <input type="number" id="N" step="any" required placeholder="e.g. 50">
-                                </div>
-                                <div class="form-group">
-                                    <label for="P">Phosphorus (P)</label>
-                                    <input type="number" id="P" step="any" required placeholder="e.g. 40">
-                                </div>
-                                <div class="form-group">
-                                    <label for="K">Potassium (K)</label>
-                                    <input type="number" id="K" step="any" required placeholder="e.g. 30">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Group: Farm -->
-                        <div class="form-group-section">
-                            <h3><span class="icon">🚜</span> Farm Details</h3>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="area">Area (Hectares)</label>
-                                    <input type="number" id="area" step="any" required placeholder="e.g. 2">
-                                </div>
-                                <div class="form-group">
-                                    <label for="state">State</label>
-                                    <select id="state" required>
-                                        <option value="">Select State</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="crop">Crop</label>
-                                    <select id="crop" required>
-                                        <option value="">Select Crop</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button type="submit" id="predictBtn" class="btn btn-primary btn-full">
-                            <span class="btn-text">Predict Yield</span>
-                        </button>
-                    </form>
+    <!-- HERO SECTION -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1 class="hero-title">Smart Crop Yield Prediction</h1>
+            <p class="hero-subtitle">AI-Powered Farming Solutions for Maximum Productivity</p>
+            
+            <div class="hero-stats">
+                <div class="stat">
+                    <div class="stat-number">99.7%</div>
+                    <div class="stat-label">Accuracy</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">22+</div>
+                    <div class="stat-label">Crops</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">20</div>
+                    <div class="stat-label">States</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">32K+</div>
+                    <div class="stat-label">Data Points</div>
                 </div>
             </div>
 
-            <!-- RIGHT COLUMN: RESULTS & CHARTS -->
-            <div class="dashboard-right">
-                <!-- Result Card -->
-                <div class="result-card fade-in" id="resultSection">
-                    <div class="result-header">
-                        <h3>Predicted Yield</h3>
-                        <div class="badge">AI Optimized</div>
-                    </div>
-                    <div class="result-body">
-                        <div class="main-yield">
-                            <span id="resultValue" class="highlight-number">--</span>
-                            <span class="unit">t/ha</span>
-                        </div>
-                        <div class="total-yield-box">
-                            <p>Estimated Total Yield: <strong id="totalYield">-- T</strong></p>
-                            <p>Confidence Score: <strong id="confidence">--%</strong></p>
-                        </div>
-                    </div>
+            <div class="hero-buttons">
+                <a href="modern-login.html" class="btn btn-primary btn-large">
+                    <span class="btn-icon">🚀</span>
+                    <span>Get Started</span>
+                </a>
+                <a href="#how-it-works" class="btn btn-secondary btn-large">
+                    <span class="btn-icon">📚</span>
+                    <span>Learn More</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES SECTION -->
+    <section class="features" id="features">
+        <div class="container">
+            <h2 class="section-title">Why Choose Crop Yield Pro?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>AI-Powered Analytics</h3>
+                    <p>Advanced machine learning algorithms analyze soil, weather, and crop data to provide accurate yield predictions.</p>
                 </div>
 
-                <!-- Charts -->
-                <div class="charts-container fade-in">
-                    <div class="chart-card">
-                        <h4>Nutrient Profile</h4>
-                        <div class="chart-wrapper">
-                            <canvas id="barChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-card">
-                        <h4>Weather Profile</h4>
-                        <div class="chart-wrapper">
-                            <canvas id="pieChart"></canvas>
-                        </div>
-                    </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Real-Time Insights</h3>
+                    <p>Monitor your crop's performance with real-time analytics and get actionable recommendations instantly.</p>
                 </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🌍</div>
+                    <h3>Multi-Region Support</h3>
+                    <p>Accurate predictions for 20 Indian states and 22+ crop varieties. Completely region-specific optimization.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">💡</div>
+                    <h3>Smart Recommendations</h3>
+                    <p>Get personalized farming recommendations based on weather patterns, soil conditions, and historical data.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Secure & Private</h3>
+                    <p>Your farm data is encrypted and stored securely. We never share your information with third parties.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>Mobile Friendly</h3>
+                    <p>Access predictions and insights anytime, anywhere on your phone, tablet, or desktop device.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS SECTION -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="container">
+            <h2 class="section-title">How It Works</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Register Account</h3>
+                    <p>Sign up for free and create your farmer profile in just minutes.</p>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Input Farm Data</h3>
+                    <p>Enter your crop information: rainfall, temperature, nutrients, and more.</p>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Get Prediction</h3>
+                    <p>Our AI instantly analyzes the data and predicts your crop yield with 99.7% accuracy.</p>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h3>Optimize Results</h3>
+                    <p>Receive actionable insights and recommendations to maximize your harvest.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA SECTION -->
+    <section class="cta">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Ready to Maximize Your Crop Yield?</h2>
+                <p>Join thousands of farmers using AI-powered predictions to optimize their farming decisions</p>
+                <a href="modern-login.html" class="btn btn-primary btn-large">
+                    <span class="btn-icon">🌱</span>
+                    <span>Start Your Free Trial</span>
+                </a>
             </div>
         </div>
     </section>
@@ -145,7 +156,7 @@
     <!-- FOOTER -->
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2024 Crop Yield Pro. All rights reserved. | Powered by AI | Built for Farmers</p>
+            <p>&copy; 2026 Crop Yield Pro. All rights reserved. | Powered by AI | Built for Farmers</p>
         </div>
     </footer>
 

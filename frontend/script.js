@@ -43,7 +43,7 @@ async function handleLogin(event) {
             }));
             
             showAlert('✓ Login successful! Redirecting...', 'success', 'login');
-            setTimeout(() => window.location.href = 'index.html', 1500);
+            setTimeout(() => window.location.href = 'dashboard.html', 1500);
         } else {
             showAlert('✗ Invalid email or password', 'error', 'login');
         }
@@ -93,7 +93,7 @@ async function handleSignup(event) {
                 }));
                 
                 showAlert('✓ Account created! Logging in...', 'success', 'signup');
-                setTimeout(() => window.location.href = 'index.html', 1500);
+                setTimeout(() => window.location.href = 'dashboard.html', 1500);
             } else {
                 showAlert('✗ Authentication error: No token received', 'error', 'signup');
             }
@@ -259,12 +259,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const currentUser = localStorage.getItem('currentUser');
         const authBtn = document.getElementById('auth-btn');
         if (currentUser && authBtn) {
-            authBtn.textContent = 'Logout';
-            authBtn.href = '#';
-            authBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                logout();
-            });
+            authBtn.textContent = 'Dashboard';
+            authBtn.href = 'dashboard.html';
+            
+            // Add a logout link if it doesn't exist
+            if (!document.getElementById('logout-btn')) {
+                const logoutBtn = document.createElement('a');
+                logoutBtn.id = 'logout-btn';
+                logoutBtn.href = '#';
+                logoutBtn.style.color = 'rgba(255, 255, 255, 0.8)';
+                logoutBtn.style.fontWeight = '500';
+                logoutBtn.style.marginLeft = '1rem';
+                logoutBtn.textContent = 'Logout';
+                logoutBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    logout();
+                });
+                authBtn.parentNode.insertBefore(logoutBtn, authBtn.nextSibling);
+            }
         }
     }
 
