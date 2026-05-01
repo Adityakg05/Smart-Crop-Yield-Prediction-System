@@ -4,7 +4,10 @@
  */
 
 // API Configuration
-const API_BASE_URL = 'http://127.0.0.1:8000';
+// API Configuration
+const API_BASE_URL = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1') 
+    ? 'http://127.0.0.1:8000' 
+    : window.location.origin;
 
 /**
  * ================================
@@ -13,7 +16,7 @@ const API_BASE_URL = 'http://127.0.0.1:8000';
  */
 
 async function handleLogin(event) {
-    event.preventDefault();
+    if (event) event.preventDefault();
     
     const email = document.getElementById('login-email')?.value;
     const password = document.getElementById('login-password')?.value;
@@ -53,7 +56,7 @@ async function handleLogin(event) {
 }
 
 async function handleSignup(event) {
-    event.preventDefault();
+    if (event) event.preventDefault();
     
     const name = document.getElementById('signup-name')?.value;
     const email = document.getElementById('signup-email')?.value;
@@ -84,7 +87,6 @@ async function handleSignup(event) {
         if (response.ok) {
             const data = await response.json();
             
-            // Verify token is present before storing
             if (data.access_token) {
                 localStorage.setItem('currentUser', JSON.stringify({
                     name: name,
@@ -122,91 +124,6 @@ function logout() {
 
 /**
  * ================================
- * PREDICTION FUNCTIONS
- * ================================
- */
-
-async function handlePrediction(event) {
-    event.preventDefault();
-
-    const rainfall = parseFloat(document.getElementById('rainfall')?.value);
-    const temperature = parseFloat(document.getElementById('temperature')?.value);
-    const humidity = parseFloat(document.getElementById('humidity')?.value);
-    const N = parseFloat(document.getElementById('N')?.value);
-    const P = parseFloat(document.getElementById('P')?.value);
-    const K = parseFloat(document.getElementById('K')?.value);
-    const area = parseFloat(document.getElementById('area')?.value);
-    const state = document.getElementById('state')?.value;
-    const crop = document.getElementById('crop')?.value;
-
-    if (!rainfall || !temperature || !humidity || !N || !P || !K || !area || !state || !crop) {
-        showAlert('✗ Please fill all fields', 'error');
-        return;
-    }
-
-    const predictionData = {
-        rainfall, temperature, humidity, N, P, K, area, state, crop
-    };
-
-    const btn = document.getElementById('predictBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<div class="spinner"></div> Predicting...';
-
-    try {
-        const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-        const token = currentUser.token;
-
-        if (!token) {
-            showAlert('✗ Please login to get predictions', 'error');
-            setTimeout(() => window.location.href = 'modern-login.html', 1500);
-            return;
-        }
-
-        const response = await fetch(`${API_BASE_URL}/predict`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(predictionData)
-        });
-
-        if (!response.ok) {
-            throw new Error('Prediction failed with status ' + response.status);
-        }
-
-        const result = await response.json();
-        
-        displayPredictionResult(result, area);
-        showAlert('✓ Prediction completed successfully!', 'success');
-
-    } catch (error) {
-        showAlert('✗ Error: ' + error.message, 'error');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<span class="btn-text">Predict Yield</span>';
-    }
-}
-
-function displayPredictionResult(result, area) {
-    const resultSection = document.getElementById('resultSection');
-    const yieldPerHectare = result.predicted_yield || 0;
-    const totalYield = yieldPerHectare * area;
-    const confidence = (result.confidence_score * 100).toFixed(1);
-
-    if (resultSection) {
-        document.getElementById('resultValue').textContent = yieldPerHectare.toFixed(2);
-        document.getElementById('confidence').textContent = confidence + '%';
-        document.getElementById('totalYield').textContent = totalYield.toFixed(2) + ' T';
-        resultSection.classList.add('show');
-        
-        // Update charts with current input values
-        updateCharts();
-    }
-}
-
-/**
- * ================================
  * UI UTILITY FUNCTIONS
  * ================================
  */
@@ -238,45 +155,50 @@ function showAlert(message, type = 'error', tabId = null) {
 
 document.addEventListener('DOMContentLoaded', function() {
     // Check authentication on protected pages
+    // Check authentication and update UI
+    const currentUser = localStorage.getItem('currentUser');
     const pageName = window.location.pathname.split('/').pop() || 'index.html';
     
-    if (pageName === 'modern-dashboard.html' || pageName === 'dashboard.html') {
-        const currentUser = localStorage.getItem('currentUser');
-        if (!currentUser) {
-            window.location.href = 'modern-login.html';
-            return;
-        }
-        
+    if (currentUser) {
         const user = JSON.parse(currentUser);
         const userNameEl = document.getElementById('userName');
+        const userGreeting = document.getElementById('userGreeting');
+        
         if (userNameEl) {
             userNameEl.textContent = user.name || 'Farmer';
         }
-    }
-    
-    // Update auth button if on index.html
-    if (pageName === 'index.html' || pageName === '') {
-        const currentUser = localStorage.getItem('currentUser');
-        const authBtn = document.getElementById('auth-btn');
-        if (currentUser && authBtn) {
-            authBtn.textContent = 'Dashboard';
-            authBtn.href = 'dashboard.html';
-            
-            // Add a logout link if it doesn't exist
-            if (!document.getElementById('logout-btn')) {
-                const logoutBtn = document.createElement('a');
-                logoutBtn.id = 'logout-btn';
-                logoutBtn.href = '#';
-                logoutBtn.style.color = 'rgba(255, 255, 255, 0.8)';
-                logoutBtn.style.fontWeight = '500';
-                logoutBtn.style.marginLeft = '1rem';
-                logoutBtn.textContent = 'Logout';
-                logoutBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    logout();
-                });
-                authBtn.parentNode.insertBefore(logoutBtn, authBtn.nextSibling);
+        if (userGreeting) {
+            userGreeting.style.display = 'flex';
+        }
+
+        // Update auth button on index.html
+        if (pageName === 'index.html' || pageName === '') {
+            const authBtn = document.getElementById('auth-btn');
+            if (authBtn) {
+                authBtn.textContent = 'Dashboard';
+                authBtn.href = 'dashboard.html';
+                
+                // Add logout if it doesn't exist
+                if (!document.getElementById('logout-btn')) {
+                    const logoutBtn = document.createElement('a');
+                    logoutBtn.id = 'logout-btn';
+                    logoutBtn.href = '#';
+                    logoutBtn.className = 'btn-nav-login btn-outline';
+                    logoutBtn.style.marginLeft = '1rem';
+                    logoutBtn.textContent = 'Logout';
+                    logoutBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        logout();
+                    });
+                    authBtn.parentNode.insertBefore(logoutBtn, authBtn.nextSibling);
+                }
             }
+        }
+    } else {
+        // Protected pages redirect
+        if (pageName === 'dashboard.html') {
+            window.location.href = 'modern-login.html';
+            return;
         }
     }
 

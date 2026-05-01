@@ -5,11 +5,12 @@ from datetime import datetime
 import os
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 
-from model import model_instance
-from auth import (
+from .model import model_instance
+from .auth import (
     User, UserCreate, UserLogin, Token, TokenData,
     authenticate_user, create_user, get_user_by_username, get_user_by_email,
     create_access_token, get_db, SECRET_KEY, ALGORITHM
@@ -49,6 +50,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Serve frontend static files
+frontend_dir = os.path.join(os.path.dirname(__file__), '..', 'frontend')
+app.mount("/frontend", StaticFiles(directory=frontend_dir, html=True), name="frontend")
 
 # Input schema defining the expected payload
 class PredictionInput(BaseModel):

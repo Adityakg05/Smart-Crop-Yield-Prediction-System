@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | Crop Yield Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=1.1">
     <style>
         .login-container {
             min-height: 100vh;
@@ -13,19 +13,20 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
-            background: linear-gradient(135deg, #1a472a 0%, #2d5016 50%, #1f4620 100%);
+            background: #ffffff;
         }
 
         .login-box {
-            background: var(--glass-bg);
+            background: linear-gradient(135deg, rgba(27, 67, 50, 0.95), rgba(45, 106, 79, 0.9));
             backdrop-filter: blur(20px);
             border: 1px solid rgba(82, 183, 136, 0.3);
             border-radius: 25px;
             padding: 3rem;
             max-width: 450px;
             width: 100%;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
             animation: slideUp 0.5s ease-out;
+            color: #ffffff; /* White text for contrast on dark green box */
         }
 
         @keyframes slideUp {
@@ -51,19 +52,19 @@
 
         .login-header h1 {
             font-size: 2rem;
-            color: var(--primary-green);
+            color: #ffffff;
             margin-bottom: 0.5rem;
         }
 
         .login-header p {
-            color: #666;
+            color: rgba(255, 255, 255, 0.8);
         }
 
         .auth-tabs {
             display: flex;
             gap: 1rem;
             margin-bottom: 2rem;
-            border-bottom: 2px solid rgba(82, 183, 136, 0.2);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
         }
 
         .tab-btn {
@@ -71,17 +72,18 @@
             padding: 0.8rem 0;
             background: none;
             border: none;
-            color: #999;
+            color: rgba(255, 255, 255, 0.6);
             font-weight: 600;
             cursor: pointer;
             transition: var(--transition);
             border-bottom: 3px solid transparent;
             font-size: 1rem;
+            font-family: inherit;
         }
 
         .tab-btn.active {
-            color: var(--accent-green);
-            border-bottom-color: var(--accent-green);
+            color: #ffffff;
+            border-bottom-color: #52B788;
         }
 
         .form-section {
@@ -97,29 +99,36 @@
             margin-bottom: 1.2rem;
         }
 
-        .form-group label {
+        .login-box .form-group label {
             display: block;
             margin-bottom: 0.4rem;
             font-weight: 500;
-            color: var(--primary-green);
+            color: #ffffff;
             font-size: 0.95rem;
         }
 
-        .form-group input {
+        .login-box .form-group input {
             width: 100%;
             padding: 0.8rem;
-            border: 2px solid rgba(82, 183, 136, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
             border-radius: 10px;
             font-size: 0.95rem;
+            font-family: inherit;
             transition: var(--transition);
-            background: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: #ffffff !important;
         }
 
-        .form-group input:focus {
+        .login-box .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.5) !important;
+        }
+
+        .login-box .form-group input:focus {
             outline: none;
-            border-color: var(--accent-green);
-            background: var(--white);
-            box-shadow: 0 0 0 3px rgba(82, 183, 136, 0.1);
+            border-color: #52B788 !important;
+            background: rgba(255, 255, 255, 0.15) !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 0 3px rgba(82, 183, 136, 0.25) !important;
         }
 
         .login-btn {
@@ -184,6 +193,11 @@
             text-decoration: none;
             font-weight: 600;
             transition: var(--transition);
+        }
+
+        body {
+            background: #ffffff;
+            color: #333;
         }
 
         .back-link a:hover {

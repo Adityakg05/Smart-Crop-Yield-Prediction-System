@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Crop Yield Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=1.1">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -17,8 +17,12 @@
                 <span>Crop Yield Pro</span>
             </a>
             <div class="nav-links">
+                <div class="user-greeting" id="userGreeting">
+                    <span class="user-icon">👤</span>
+                    <span id="userName">Farmer</span>
+                </div>
                 <a href="index.html">Home</a>
-                <a href="#" class="btn-nav-login" id="auth-btn">Logout</a>
+                <a href="#" class="btn-nav-login btn-outline" id="auth-btn" onclick="logout()">Logout</a>
             </div>
         </div>
     </nav>
@@ -95,7 +99,7 @@
                             </div>
                         </div>
 
-                        <button type="submit" id="predictBtn" class="btn btn-primary btn-full">
+                        <button type="button" id="predictBtn" onclick="handlePrediction()" class="btn btn-primary btn-full">
                             <span class="btn-text">Predict Yield</span>
                         </button>
                     </form>
