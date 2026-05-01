@@ -595,53 +595,82 @@ body::after {
     gap: 30px;
 }
 
+@keyframes iconBounce {
+    0%, 100% { transform: scale(1) rotate(0deg) translateY(0); }
+    30%       { transform: scale(1.2) rotate(-6deg) translateY(-6px); }
+    60%       { transform: scale(1.15) rotate(6deg) translateY(-3px); }
+}
+
 .feature-card {
-    background: #1B4332 !important; /* DARK GREEN CARDS */
+    background: #1B4332 !important;
     padding: 3rem 2rem;
     border-radius: 24px;
     text-align: center;
     border: 1px solid rgba(82, 183, 136, 0.2);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                box-shadow 0.35s ease,
+                background 0.35s ease;
     color: #ffffff !important;
     animation: slideUpFade 0.8s ease-out both;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Gradient border glow via pseudo-element */
+.feature-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    padding: 1px;
+    background: linear-gradient(135deg, transparent, rgba(82, 183, 136, 0), transparent);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+}
+
+.feature-card:hover::before {
+    background: linear-gradient(135deg, #52B788, #2ecc71, #145a32);
+    opacity: 1;
 }
 
 @keyframes slideUpFade {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 .feature-icon {
     font-size: 3.5rem;
     margin-bottom: 1.5rem;
     display: inline-block;
-    transition: var(--transition);
+    transition: transform 0.2s ease;
 }
 
 .feature-card:hover .feature-icon {
-    transform: scale(1.2) rotate(5deg);
+    animation: iconBounce 0.6s ease forwards;
 }
 
 .feature-card h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
     color: var(--accent-green);
-    margin-bottom: 1rem;
+    margin-bottom: 0.9rem;
+    letter-spacing: 0.2px;
 }
 
 .feature-card p {
-    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.75);
+    line-height: 1.7;
 }
 
 .feature-card:hover {
-    transform: translateY(-15px);
+    transform: translateY(-10px) scale(1.03);
     background: #143d2b !important;
-    border-color: var(--accent-green);
-    box-shadow: 0 20px 40px rgba(82, 183, 136, 0.15);
+    box-shadow: 0 24px 48px rgba(82, 183, 136, 0.2), 0 0 0 1px rgba(82, 183, 136, 0.3);
 }
 
 /* HOW IT WORKS - WHITE SECTION */
