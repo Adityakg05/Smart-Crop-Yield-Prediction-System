@@ -182,6 +182,18 @@ body::after {
     text-transform: uppercase;
 }
 
+.icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: rgba(82, 183, 136, 0.1);
+    border-radius: 8px;
+    margin-right: 8px;
+    font-size: 1.2rem;
+}
+
 #userName {
     font-weight: 500;
     font-size: 0.9rem;
@@ -496,6 +508,13 @@ body::after {
     color: #ffffff !important;
     border: 1px solid rgba(82, 183, 136, 0.2);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: var(--transition);
+}
+
+.form-card:hover, .result-card:hover, .chart-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(82, 183, 136, 0.15);
+    border-color: rgba(82, 183, 136, 0.4);
 }
 
 .form-card h2 {
@@ -579,6 +598,7 @@ body::after {
     font-weight: 800;
     color: var(--accent-green);
     margin: 1rem 0;
+    transition: all 0.5s ease;
 }
 
 .highlight-number {
