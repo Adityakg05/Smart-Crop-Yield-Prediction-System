@@ -209,6 +209,34 @@ async function predict(event) {
                 resultSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
 
+            // Generate Recommendations
+            const recommendationsBox = document.getElementById('recommendationsBox');
+            const recommendationsList = document.getElementById('recommendationsList');
+            
+            if (recommendationsBox && recommendationsList) {
+                recommendationsList.innerHTML = '';
+                const insights = [];
+                
+                if (payload.N < 40) insights.push("Nitrogen level is low. Consider applying nitrogen-rich fertilizers.");
+                if (payload.rainfall < 100) insights.push("Low rainfall detected. Consider supplementary irrigation for better yield.");
+                if (payload.humidity > 80) insights.push("High humidity increases risk of crop disease. Monitor for pests/fungus.");
+                if (payload.temperature > 35) insights.push("High temperature may cause heat stress to crops.");
+                
+                if (insights.length > 0) {
+                    insights.forEach(text => {
+                        const li = document.createElement('li');
+                        li.textContent = text;
+                        recommendationsList.appendChild(li);
+                    });
+                    recommendationsBox.style.display = 'block';
+                } else {
+                    const li = document.createElement('li');
+                    li.textContent = "Optimal conditions detected for this crop profile.";
+                    recommendationsList.appendChild(li);
+                    recommendationsBox.style.display = 'block';
+                }
+            }
+
             // STEP 7: SAFE CHART UPDATE
             try {
                 updateCharts();
@@ -352,6 +380,14 @@ document.addEventListener('DOMContentLoaded', function() {
         predictionForm.addEventListener('submit', predict);
     }
 
+    // Add real-time listeners for dynamic chart updates
+    ['N', 'P', 'K', 'rainfall', 'temperature', 'humidity'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('input', updateCharts);
+        }
+    });
+
     // Smooth scrolling for navigation links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
@@ -421,8 +457,8 @@ function getCropOptions() {
 }
 
 // Script to handle Chart.js integration and dynamic updates
-let dashboardBarChart = null;
-let dashboardPieChart = null;
+window.barChart = null;
+window.pieChart = null;
 
 // Modern color palette for better visualization
 const chartColors = {
@@ -449,7 +485,7 @@ function initCharts() {
     Chart.defaults.color = 'rgba(255, 255, 255, 0.7)';
     Chart.defaults.font.family = "'Poppins', sans-serif";
 
-    dashboardBarChart = new Chart(barCtx, {
+    window.barChart = new Chart(barCtx, {
         type: 'bar',
         data: {
             labels: ["Nitrogen (N)", "Phosphorus (P)", "Potassium (K)"],
@@ -502,7 +538,7 @@ function initCharts() {
         }
     });
 
-    dashboardPieChart = new Chart(pieCtx, {
+    window.pieChart = new Chart(pieCtx, {
         type: 'doughnut',
         data: {
             labels: ["Rainfall", "Temperature", "Humidity"],
@@ -540,22 +576,22 @@ function initCharts() {
 }
 
 function updateCharts() {
-    if (!dashboardBarChart || !dashboardPieChart) return;
+    if (!window.barChart || !window.pieChart) return;
 
     // Get input values
-    const n = parseFloat(document.getElementById('N').value) || 0;
-    const p = parseFloat(document.getElementById('P').value) || 0;
-    const k = parseFloat(document.getElementById('K').value) || 0;
+    const n = parseFloat(document.getElementById('N')?.value) || 0;
+    const p = parseFloat(document.getElementById('P')?.value) || 0;
+    const k = parseFloat(document.getElementById('K')?.value) || 0;
     
-    const rain = parseFloat(document.getElementById('rainfall').value) || 0;
-    const temp = parseFloat(document.getElementById('temperature').value) || 0;
-    const hum = parseFloat(document.getElementById('humidity').value) || 0;
+    const rain = parseFloat(document.getElementById('rainfall')?.value) || 0;
+    const temp = parseFloat(document.getElementById('temperature')?.value) || 0;
+    const hum = parseFloat(document.getElementById('humidity')?.value) || 0;
 
-    // Update Bar Chart
-    dashboardBarChart.data.datasets[0].data = [n, p, k];
-    dashboardBarChart.update();
+    // Update Bar Chart data
+    window.barChart.data.datasets[0].data = [n, p, k];
+    window.barChart.update();
 
-    // Update Pie Chart (we normalize these or just show them relative to each other)
-    dashboardPieChart.data.datasets[0].data = [rain, temp, hum];
-    dashboardPieChart.update();
+    // Update Pie Chart data
+    window.pieChart.data.datasets[0].data = [rain, temp, hum];
+    window.pieChart.update();
 }
