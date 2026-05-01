@@ -5,9 +5,10 @@
 
 // API Configuration
 // API Configuration
-const API_BASE_URL = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1') 
-    ? 'http://127.0.0.1:8000' 
-    : window.location.origin;
+// API Configuration
+const API_BASE_URL = (window.location.protocol === 'http:' || window.location.protocol === 'https:') 
+    ? (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1') ? 'http://127.0.0.1:8000' : window.location.origin)
+    : 'http://127.0.0.1:8000'; // Default to localhost if opened as file
 
 /**
  * ================================
@@ -131,102 +132,104 @@ function logout() {
 async function predict(event) {
     if (event) event.preventDefault();
     
-    console.log("Predict triggered");
+    // STEP 9: DEBUG LOGS
+    console.log("Predict clicked");
     
-    // Get current user for token
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    if (!currentUser || !currentUser.token) {
-        console.warn("No authentication token found");
-        showAlert('✗ You must be logged in to make predictions', 'error');
-        setTimeout(() => window.location.href = 'modern-login.html', 2000);
-        return;
-    }
-
-    // Get form inputs
-    const rainfall = parseFloat(document.getElementById('rainfall')?.value);
-    const temperature = parseFloat(document.getElementById('temperature')?.value);
-    const humidity = parseFloat(document.getElementById('humidity')?.value);
-    const N = parseFloat(document.getElementById('N')?.value);
-    const P = parseFloat(document.getElementById('P')?.value);
-    const K = parseFloat(document.getElementById('K')?.value);
-    const area = parseFloat(document.getElementById('area')?.value);
+    // STEP 4: INPUT VALIDATION
+    const rainfall = document.getElementById('rainfall')?.value;
+    const temperature = document.getElementById('temperature')?.value;
+    const humidity = document.getElementById('humidity')?.value;
+    const N = document.getElementById('N')?.value;
+    const P = document.getElementById('P')?.value;
+    const K = document.getElementById('K')?.value;
+    const area = document.getElementById('area')?.value;
     const state = document.getElementById('state')?.value;
     const crop = document.getElementById('crop')?.value;
 
-    console.log("Validating inputs...");
-    // Validate inputs
-    if (isNaN(rainfall) || isNaN(temperature) || isNaN(humidity) || isNaN(N) || isNaN(P) || isNaN(K) || isNaN(area) || !state || !crop) {
-        console.error("Validation failed: Missing or invalid fields");
-        showAlert('✗ Please fill in all fields correctly', 'error');
+    if (!rainfall || !temperature || !humidity || !N || !P || !K || !area || !state || !crop) {
+        alert("Please fill in all fields before predicting.");
         return;
     }
 
-    const payload = { rainfall, temperature, humidity, N, P, K, area, state, crop };
-    console.log("Payload prepared:", payload);
+    const payload = {
+        rainfall: parseFloat(rainfall),
+        temperature: parseFloat(temperature),
+        humidity: parseFloat(humidity),
+        N: parseFloat(N),
+        P: parseFloat(P),
+        K: parseFloat(K),
+        area: parseFloat(area),
+        state: state,
+        crop: crop
+    };
+
+    // STEP 9: DEBUG LOGS
+    console.log("Payload:", payload);
+
+    // Get Auth Token (Required by Backend)
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    const token = currentUser ? currentUser.token : null;
 
     try {
         const predictBtn = document.getElementById('predictBtn');
-        const btnText = predictBtn?.querySelector('.btn-text');
-        if (btnText) btnText.textContent = 'Analyzing...';
         if (predictBtn) predictBtn.disabled = true;
 
-        console.log("Fetching from API...");
+        // STEP 3: API CALL
         const response = await fetch(`${API_BASE_URL}/predict`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${currentUser.token}`
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": token ? `Bearer ${token}` : "" 
             },
             body: JSON.stringify(payload)
         });
 
-        console.log('API Response Status:', response.status);
-
+        // STEP 5: RESPONSE HANDLING
         if (response.ok) {
             const data = await response.json();
-            console.log('Prediction Result Received:', data);
+            // STEP 9: DEBUG LOGS
+            console.log("Response:", data);
 
-            // Update UI
+            // STEP 6: UPDATE UI
             const resultValue = document.getElementById('resultValue');
             const totalYield = document.getElementById('totalYield');
-            const resultSection = document.getElementById('resultSection');
             const confidenceEl = document.getElementById('confidence');
+            const resultSection = document.getElementById('resultSection');
 
             if (resultValue) resultValue.textContent = data.predicted_yield.toFixed(2);
             if (totalYield) {
-                const total = data.predicted_yield * area;
+                const total = data.predicted_yield * payload.area;
                 totalYield.textContent = formatNumber(total.toFixed(0)) + ' T';
             }
             if (confidenceEl) confidenceEl.textContent = (data.confidence_score * 100).toFixed(1) + '%';
             
             if (resultSection) {
                 resultSection.classList.add('show');
+                resultSection.style.display = 'block'; // Ensure visibility
                 resultSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
 
-            // Update charts safely
+            // STEP 7: SAFE CHART UPDATE
             try {
-                console.log("Updating charts...");
                 updateCharts();
-            } catch (chartError) {
-                console.error("Chart update failed, but prediction output was rendered:", chartError);
+            } catch (chartErr) {
+                console.error("Charts failed to update, but prediction is valid.");
             }
-            
+
             showAlert('✓ Prediction successful!', 'success');
         } else {
-            const errorData = await response.json();
-            console.error('API Error Response:', errorData);
-            showAlert('✗ Prediction failed: ' + (errorData.detail || 'Unknown error'), 'error');
+            // STEP 8: ERROR HANDLING
+            const errData = await response.json().catch(() => ({ detail: "Unknown error" }));
+            console.error("API Error:", errData);
+            alert("Prediction failed: " + (errData.detail || "Server error"));
         }
     } catch (error) {
-        console.error('Network/Connection Error:', error);
-        showAlert('✗ Connection error: ' + error.message, 'error');
+        // STEP 8: ERROR HANDLING
+        console.error("Network Error:", error);
+        alert("Connection refused. Please ensure the backend server is running on http://127.0.0.1:8000");
     } finally {
         const predictBtn = document.getElementById('predictBtn');
-        const btnText = predictBtn?.querySelector('.btn-text');
-        if (btnText) btnText.textContent = 'Predict Yield';
         if (predictBtn) predictBtn.disabled = false;
-        console.log("Prediction flow complete");
     }
 }
 
