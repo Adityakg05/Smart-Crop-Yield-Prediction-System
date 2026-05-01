@@ -217,8 +217,13 @@ async function predict(event) {
             }
 
             showAlert('✓ Prediction successful!', 'success');
+        } else if (response.status === 401) {
+            // STEP 8: ERROR HANDLING - Auth failure
+            console.error("Authentication failed: Session expired or invalid");
+            alert("Your session has expired. Please log in again to continue.");
+            logout(); // Redirect to login
         } else {
-            // STEP 8: ERROR HANDLING
+            // STEP 8: ERROR HANDLING - Other server errors
             const errData = await response.json().catch(() => ({ detail: "Unknown error" }));
             console.error("API Error:", errData);
             alert("Prediction failed: " + (errData.detail || "Server error"));
