@@ -616,6 +616,14 @@ body::after {
     transition: all 0.5s ease;
 }
 
+.result-info {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: -10px;
+    margin-bottom: 15px;
+    font-style: italic;
+}
+
 .result-card.show {
     animation: slideUpFade 0.6s ease-out forwards;
     border-color: var(--accent-green);
