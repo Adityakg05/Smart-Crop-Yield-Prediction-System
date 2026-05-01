@@ -458,7 +458,16 @@ body {
 .dashboard-section {
     padding: 100px 20px 40px;
     min-height: calc(100vh - 80px);
-    background: var(--light-bg);
+    background: url('farm-bg.png') no-repeat center center/cover;
+    position: relative;
+}
+
+.dashboard-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(8, 28, 21, 0.85); /* dark green overlay */
+    z-index: 0;
 }
 
 .dashboard-container {
@@ -468,22 +477,27 @@ body {
     grid-template-columns: 1fr 1.2fr;
     gap: 30px;
     align-items: start;
+    position: relative;
+    z-index: 1;
 }
 
 /* Left Column - Input Form */
 .form-card {
-    background: var(--white);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     padding: 2.5rem;
     border-radius: 24px;
-    box-shadow: var(--shadow);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--white);
 }
 
 .form-card h2 {
-    color: var(--primary-green);
+    color: var(--accent-green);
     margin-bottom: 2rem;
     font-size: 1.5rem;
-    border-bottom: 2px solid var(--light-green);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
     padding-bottom: 0.5rem;
 }
 
@@ -493,7 +507,7 @@ body {
 
 .form-group-section h3 {
     font-size: 1.1rem;
-    color: var(--dark);
+    color: var(--white);
     margin-bottom: 1rem;
     display: flex;
     align-items: center;
@@ -515,32 +529,42 @@ body {
 .form-group label {
     font-size: 0.85rem;
     font-weight: 500;
-    color: #555;
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .form-group input,
 .form-group select {
     padding: 0.9rem 1.1rem;
-    border: 1.5px solid transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 14px;
     font-family: inherit;
     font-size: 0.95rem;
     transition: var(--transition);
-    background: rgba(82, 183, 136, 0.12);
-    color: var(--dark);
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--white);
+}
+
+.form-group select option {
+    background: var(--dark);
+    color: var(--white);
+}
+
+.form-group input::placeholder,
+.form-group select::placeholder {
+    color: rgba(255, 255, 255, 0.4);
 }
 
 .form-group input:hover,
 .form-group select:hover {
-    background: rgba(82, 183, 136, 0.18);
+    background: rgba(0, 0, 0, 0.3);
 }
 
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
     border-color: var(--accent-green);
-    background: var(--white);
-    box-shadow: 0 0 0 4px rgba(82, 183, 136, 0.2);
+    background: rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 0 3px rgba(82, 183, 136, 0.2);
     transform: translateY(-1px);
 }
 
@@ -560,11 +584,14 @@ body {
 }
 
 .result-card {
-    background: linear-gradient(135deg, var(--primary-green), var(--accent-green));
+    background: linear-gradient(135deg, rgba(27, 67, 50, 0.95), rgba(82, 183, 136, 0.85));
     color: var(--white);
     padding: 2rem;
     border-radius: 24px;
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 10px 40px rgba(82, 183, 136, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
     overflow: hidden;
     display: none; /* Initially hidden until prediction */
@@ -638,17 +665,19 @@ body {
 }
 
 .chart-card {
-    background: var(--white);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     padding: 1.5rem;
     border-radius: 24px;
-    box-shadow: var(--shadow);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     display: flex;
     flex-direction: column;
 }
 
 .chart-card h4 {
-    color: var(--dark);
+    color: var(--white);
     margin-bottom: 1rem;
     font-size: 1rem;
     text-align: center;
