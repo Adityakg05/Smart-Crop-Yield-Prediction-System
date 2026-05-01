@@ -484,6 +484,53 @@ body::after {
     letter-spacing: 1px;
 }
 
+.stat-subtext {
+    display: block;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 6px;
+    font-style: italic;
+    line-height: 1.4;
+}
+
+/* Tooltip on stat cards */
+.stat-tooltip-wrap {
+    position: relative;
+}
+
+.stat-tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(13, 40, 24, 0.95);
+    border: 1px solid rgba(82, 183, 136, 0.3);
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.75rem;
+    padding: 8px 12px;
+    border-radius: 10px;
+    white-space: nowrap;
+    z-index: 100;
+    pointer-events: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+.stat-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(82, 183, 136, 0.3);
+}
+
+.stat-tooltip-wrap:hover .stat-tooltip {
+    display: block;
+}
+
+
 /* BUTTONS */
 .btn {
     display: inline-flex;

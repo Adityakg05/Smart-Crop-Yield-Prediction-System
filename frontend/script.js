@@ -57,6 +57,49 @@ function initTypingAnimation() {
     setTimeout(type, 800); // slight initial delay for page load feel
 }
 
+/**
+ * ================================
+ * COUNT-UP ANIMATION (Hero Stats)
+ * ================================
+ */
+function initCountUp() {
+    const statNumbers = document.querySelectorAll('.stat-number[data-count]');
+    if (!statNumbers.length) return;
+
+    const animateCount = (el) => {
+        const target = parseFloat(el.dataset.count);
+        const suffix = el.dataset.suffix || '';
+        const duration = 1800;
+        const steps = 60;
+        const stepTime = duration / steps;
+        let current = 0;
+        const increment = target / steps;
+
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            // Show one decimal only if target has decimals
+            const display = Number.isInteger(target) ? Math.round(current) : current.toFixed(1);
+            el.textContent = display + suffix;
+        }, stepTime);
+    };
+
+    // Use IntersectionObserver so counts trigger when in view
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                animateCount(entry.target);
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.5 });
+
+    statNumbers.forEach(el => observer.observe(el));
+}
+
 
 /**
  * ================================
@@ -437,6 +480,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize typing animation on landing page
     initTypingAnimation();
+
+    // Initialize count-up animation for hero stats
+    initCountUp();
 
     // Attach form submit
     const predictionForm = document.getElementById('prediction-form');
