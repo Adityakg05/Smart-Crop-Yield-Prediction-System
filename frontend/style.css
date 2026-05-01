@@ -580,6 +580,11 @@ body::after {
     gap: 20px;
 }
 
+.chart-wrapper {
+    max-height: 250px;
+    position: relative;
+}
+
 @media (max-width: 1100px) {
     .dashboard-container {
         grid-template-columns: 1fr;

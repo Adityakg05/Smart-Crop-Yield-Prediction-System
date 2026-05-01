@@ -402,10 +402,16 @@ function getCropOptions() {
 let dashboardBarChart = null;
 let dashboardPieChart = null;
 
+// Modern color palette for better visualization
 const chartColors = {
-    green: '#1B4332',
-    lightGreen: '#52B788',
-    softYellow: '#D8F3DC'
+    // Bar chart: N, P, K
+    nitrogen: '#2ecc71',
+    phosphorus: '#27ae60',
+    potassium: '#145a32',
+    // Pie chart: Weather
+    rainfall: '#1abc9c',
+    temperature: '#f39c12',
+    humidity: '#3498db'
 };
 
 function initCharts() {
@@ -417,25 +423,49 @@ function initCharts() {
     const barCtx = barChartCanvas.getContext("2d");
     const pieCtx = pieChartCanvas.getContext("2d");
 
+    // Global Chart.js defaults for modern look
+    Chart.defaults.color = 'rgba(255, 255, 255, 0.7)';
+    Chart.defaults.font.family = "'Poppins', sans-serif";
+
     dashboardBarChart = new Chart(barCtx, {
         type: 'bar',
         data: {
             labels: ["Nitrogen (N)", "Phosphorus (P)", "Potassium (K)"],
             datasets: [{
-                label: "Nutrients",
+                label: "Nutrient Level",
                 data: [0, 0, 0],
-                backgroundColor: [chartColors.green, chartColors.lightGreen, chartColors.softYellow],
-                borderRadius: 6
+                backgroundColor: [chartColors.nitrogen, chartColors.phosphorus, chartColors.potassium],
+                borderRadius: 8,
+                hoverBackgroundColor: ['#34e881', '#2fcf73', '#1b7a44'],
+                borderWidth: 0
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: {
+                duration: 1000,
+                easing: 'easeOutQuart'
+            },
             plugins: {
-                legend: { display: false }
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(27, 67, 50, 0.9)',
+                    titleColor: '#52B788',
+                    bodyColor: '#ffffff',
+                    padding: 12,
+                    cornerRadius: 8,
+                    displayColors: false
+                }
             },
             scales: {
-                y: { beginAtZero: true }
+                y: { 
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                },
+                x: {
+                    grid: { display: false }
+                }
             }
         }
     });
@@ -445,16 +475,33 @@ function initCharts() {
         data: {
             labels: ["Rainfall", "Temperature", "Humidity"],
             datasets: [{
-                data: [1, 1, 1], // Default equal chunks
-                backgroundColor: [chartColors.green, chartColors.lightGreen, chartColors.softYellow],
+                data: [1, 1, 1], // Initial placeholders
+                backgroundColor: [chartColors.rainfall, chartColors.temperature, chartColors.humidity],
+                hoverOffset: 15,
                 borderWidth: 0
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: {
+                duration: 1000,
+                easing: 'easeOutBack'
+            },
+            cutout: '65%',
             plugins: {
-                legend: { position: 'bottom' }
+                legend: { 
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(27, 67, 50, 0.9)',
+                    padding: 12,
+                    cornerRadius: 8
+                }
             }
         }
     });
