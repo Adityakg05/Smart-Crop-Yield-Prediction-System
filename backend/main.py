@@ -74,7 +74,19 @@ class PredictionOutput(BaseModel):
 
 # Authentication functions
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    """Get current authenticated user."""
+    """
+    Dependency to validate the JWT token and return the current user.
+    
+    Args:
+        token: JWT access token from the Authorization header
+        db: Database session dependency
+        
+    Returns:
+        User: The authenticated User object
+        
+    Raises:
+        HTTPException: If token is invalid or user not found
+    """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -95,7 +107,18 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     return user
 
 async def get_current_active_user(current_user: User = Depends(get_current_user)):
-    """Get current active user."""
+    """
+    Dependency to ensure the authenticated user is active.
+    
+    Args:
+        current_user: User object from get_current_user dependency
+        
+    Returns:
+        User: The active User object
+        
+    Raises:
+        HTTPException: If user is inactive
+    """
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user

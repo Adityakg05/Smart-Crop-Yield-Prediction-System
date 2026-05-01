@@ -4,6 +4,9 @@ A machine learning-based simple system for predicting agricultural crop yields u
 
 ## 🎯 Features
 
+- **User Authentication (JWT)**: Secure registration and login system with persistent sessions
+- **Personalized Dashboard**: User-specific greeting and data management
+- **Interactive Data Visualization**: Real-time charts for nutrient profiles and weather data using Chart.js
 - **Advanced ML Pipeline**: Proper data cleaning, train-test split, balanced sampling, and realistic evaluation
 - **Random Forest Model**: Robust ensemble learning with 100 trees
 - **Fair Training**: Balanced sampling on training data grouped by state (only applied to training, not test)
@@ -271,5 +274,5 @@ Contributions are welcome! Please feel free to submit issues or pull requests.
 
 ---
 
-**Last Updated**: April 30, 2026, 08:50 PM
-**Version**: 1.0.0
+**Last Updated**: May 1, 2026, 06:15 PM
+**Version**: 2.0.0
