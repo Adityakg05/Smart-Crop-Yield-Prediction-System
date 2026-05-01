@@ -128,38 +128,41 @@ function logout() {
  * ================================
  */
 
-async function handlePrediction(event) {
+async function predict(event) {
     if (event) event.preventDefault();
     
-    console.log('--- Prediction Started ---');
+    console.log("Predict triggered");
     
     // Get current user for token
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     if (!currentUser || !currentUser.token) {
+        console.warn("No authentication token found");
         showAlert('✗ You must be logged in to make predictions', 'error');
         setTimeout(() => window.location.href = 'modern-login.html', 2000);
         return;
     }
 
     // Get form inputs
-    const rainfall = parseFloat(document.getElementById('rainfall').value);
-    const temperature = parseFloat(document.getElementById('temperature').value);
-    const humidity = parseFloat(document.getElementById('humidity').value);
-    const N = parseFloat(document.getElementById('N').value);
-    const P = parseFloat(document.getElementById('P').value);
-    const K = parseFloat(document.getElementById('K').value);
-    const area = parseFloat(document.getElementById('area').value);
-    const state = document.getElementById('state').value;
-    const crop = document.getElementById('crop').value;
+    const rainfall = parseFloat(document.getElementById('rainfall')?.value);
+    const temperature = parseFloat(document.getElementById('temperature')?.value);
+    const humidity = parseFloat(document.getElementById('humidity')?.value);
+    const N = parseFloat(document.getElementById('N')?.value);
+    const P = parseFloat(document.getElementById('P')?.value);
+    const K = parseFloat(document.getElementById('K')?.value);
+    const area = parseFloat(document.getElementById('area')?.value);
+    const state = document.getElementById('state')?.value;
+    const crop = document.getElementById('crop')?.value;
 
+    console.log("Validating inputs...");
     // Validate inputs
     if (isNaN(rainfall) || isNaN(temperature) || isNaN(humidity) || isNaN(N) || isNaN(P) || isNaN(K) || isNaN(area) || !state || !crop) {
+        console.error("Validation failed: Missing or invalid fields");
         showAlert('✗ Please fill in all fields correctly', 'error');
         return;
     }
 
     const payload = { rainfall, temperature, humidity, N, P, K, area, state, crop };
-    console.log('Prediction Payload:', payload);
+    console.log("Payload prepared:", payload);
 
     try {
         const predictBtn = document.getElementById('predictBtn');
@@ -167,6 +170,7 @@ async function handlePrediction(event) {
         if (btnText) btnText.textContent = 'Analyzing...';
         if (predictBtn) predictBtn.disabled = true;
 
+        console.log("Fetching from API...");
         const response = await fetch(`${API_BASE_URL}/predict`, {
             method: 'POST',
             headers: {
@@ -180,7 +184,7 @@ async function handlePrediction(event) {
 
         if (response.ok) {
             const data = await response.json();
-            console.log('Prediction Result:', data);
+            console.log('Prediction Result Received:', data);
 
             // Update UI
             const resultValue = document.getElementById('resultValue');
@@ -200,23 +204,29 @@ async function handlePrediction(event) {
                 resultSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
 
-            // Update charts with current input data
-            updateCharts();
+            // Update charts safely
+            try {
+                console.log("Updating charts...");
+                updateCharts();
+            } catch (chartError) {
+                console.error("Chart update failed, but prediction output was rendered:", chartError);
+            }
             
             showAlert('✓ Prediction successful!', 'success');
         } else {
             const errorData = await response.json();
-            console.error('Prediction Error:', errorData);
+            console.error('API Error Response:', errorData);
             showAlert('✗ Prediction failed: ' + (errorData.detail || 'Unknown error'), 'error');
         }
     } catch (error) {
-        console.error('Connection Error:', error);
+        console.error('Network/Connection Error:', error);
         showAlert('✗ Connection error: ' + error.message, 'error');
     } finally {
         const predictBtn = document.getElementById('predictBtn');
         const btnText = predictBtn?.querySelector('.btn-text');
         if (btnText) btnText.textContent = 'Predict Yield';
         if (predictBtn) predictBtn.disabled = false;
+        console.log("Prediction flow complete");
     }
 }
 
@@ -331,7 +341,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Attach form submit
     const predictionForm = document.getElementById('prediction-form');
     if (predictionForm) {
-        predictionForm.addEventListener('submit', handlePrediction);
+        predictionForm.addEventListener('submit', predict);
     }
 
     // Smooth scrolling for navigation links
