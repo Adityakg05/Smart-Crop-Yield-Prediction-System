@@ -12,6 +12,54 @@ const API_BASE_URL = (window.location.protocol === 'http:' || window.location.pr
 
 /**
  * ================================
+ * TYPING ANIMATION (Hero Section)
+ * ================================
+ */
+function initTypingAnimation() {
+    const el = document.getElementById('typingText');
+    if (!el) return;
+
+    const phrases = [
+        'Predict → Optimize → Grow',
+        'AI-Powered Farming Solutions',
+        'Smart Yield, Better Harvest',
+        'Data-Driven Agriculture'
+    ];
+
+    let phraseIdx = 0;
+    let charIdx = 0;
+    let isDeleting = false;
+
+    function type() {
+        const current = phrases[phraseIdx];
+        if (isDeleting) {
+            el.textContent = current.substring(0, charIdx - 1);
+            charIdx--;
+        } else {
+            el.textContent = current.substring(0, charIdx + 1);
+            charIdx++;
+        }
+
+        let delay = isDeleting ? 50 : 90;
+
+        if (!isDeleting && charIdx === current.length) {
+            delay = 2000; // pause at end
+            isDeleting = true;
+        } else if (isDeleting && charIdx === 0) {
+            isDeleting = false;
+            phraseIdx = (phraseIdx + 1) % phrases.length;
+            delay = 400;
+        }
+
+        setTimeout(type, delay);
+    }
+
+    setTimeout(type, 800); // slight initial delay for page load feel
+}
+
+
+/**
+ * ================================
  * AUTHENTICATION FUNCTIONS
  * ================================
  */
@@ -149,6 +197,19 @@ async function predict(event) {
     if (!rainfall || !temperature || !humidity || !N || !P || !K || !area || !state || !crop) {
         alert("Please fill in all fields before predicting.");
         return;
+    }
+
+    // Crop-State Combination Validation
+    const validCropsForState = stateCropMapping[state];
+    if (validCropsForState && !validCropsForState.includes(crop)) {
+        const suggestions = validCropsForState.slice(0, 5).join(', ');
+        const proceed = confirm(
+            `⚠️ "${crop}" is not commonly grown in ${state}.\n\n` +
+            `Prediction may not be accurate.\n\n` +
+            `Crops commonly grown in ${state}:\n${suggestions}\n\n` +
+            `Do you still want to proceed?`
+        );
+        if (!proceed) return;
     }
 
     const payload = {
@@ -374,6 +435,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize Dashboard Charts if canvases exist
     initCharts();
 
+    // Initialize typing animation on landing page
+    initTypingAnimation();
+
     // Attach form submit
     const predictionForm = document.getElementById('prediction-form');
     if (predictionForm) {
@@ -446,6 +510,30 @@ function getStateOptions() {
         'Jharkhand', 'Kerala'
     ];
 }
+
+// Realistic mapping of crops to states in India
+const stateCropMapping = {
+    'Punjab': ['Wheat', 'Rice', 'Cotton', 'Maize', 'Barley'],
+    'Haryana': ['Wheat', 'Rice', 'Cotton', 'Bajra', 'Mustard'],
+    'Uttar Pradesh': ['Wheat', 'Rice', 'Sugarcane', 'Maize', 'Gram', 'Barley', 'Mustard'],
+    'Maharashtra': ['Cotton', 'Sugarcane', 'Soybean', 'Jowar', 'Bajra', 'Grapes', 'Groundnut', 'Sorghum'],
+    'West Bengal': ['Rice', 'Jute', 'Tea', 'Tobacco', 'Maize', 'Mustard'],
+    'Karnataka': ['Coffee', 'Ragi', 'Maize', 'Sugarcane', 'Cotton', 'Sorghum', 'Groundnut'],
+    'Kerala': ['Coconut', 'Tea', 'Coffee', 'Rice', 'Rubber', 'Pepper'],
+    'Tamil Nadu': ['Rice', 'Sugarcane', 'Cotton', 'Groundnut', 'Coconut', 'Maize'],
+    'Andhra Pradesh': ['Rice', 'Tobacco', 'Cotton', 'Maize', 'Groundnut', 'Sunflower'],
+    'Telangana': ['Rice', 'Cotton', 'Maize', 'Sorghum', 'Soybean'],
+    'Gujarat': ['Cotton', 'Groundnut', 'Wheat', 'Bajra', 'Mustard', 'Tobacco'],
+    'Rajasthan': ['Bajra', 'Mustard', 'Wheat', 'Gram', 'Barley', 'Cotton'],
+    'Madhya Pradesh': ['Soybean', 'Wheat', 'Gram', 'Maize', 'Cotton', 'Jowar'],
+    'Bihar': ['Rice', 'Wheat', 'Maize', 'Sugarcane', 'Tobacco', 'Jute'],
+    'Assam': ['Tea', 'Rice', 'Jute', 'Sugarcane', 'Maize'],
+    'Orissa': ['Rice', 'Sugarcane', 'Groundnut', 'Tobacco', 'Maize'],
+    'Chhattisgarh': ['Rice', 'Maize', 'Soybean', 'Sugarcane'],
+    'Himachal Pradesh': ['Maize', 'Wheat', 'Rice', 'Barley', 'Apple'],
+    'Uttarakhand': ['Rice', 'Wheat', 'Maize', 'Sugarcane', 'Soybean'],
+    'Jharkhand': ['Rice', 'Maize', 'Wheat', 'Gram']
+};
 
 function getCropOptions() {
     return [

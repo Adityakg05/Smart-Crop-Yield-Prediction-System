@@ -221,15 +221,37 @@ body::after {
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 60px;
     text-align: center;
-    padding: 120px 20px 80px;
+    padding: 120px 40px 80px;
     background: url('farm-bg.png') no-repeat center center/cover;
-    animation: fadeIn 1s ease-out;
+    overflow: hidden;
 }
 
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
+}
+
+@keyframes gradientShift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-14px); }
+}
+
+@keyframes heroFadeIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0; }
 }
 
 .hero-overlay {
@@ -242,10 +264,47 @@ body::after {
     z-index: 1;
 }
 
+.animated-gradient {
+    background: linear-gradient(
+        135deg,
+        rgba(4, 14, 10, 0.88) 0%,
+        rgba(27, 67, 50, 0.80) 30%,
+        rgba(4, 14, 10, 0.88) 60%,
+        rgba(13, 40, 24, 0.85) 100%
+    );
+    background-size: 300% 300%;
+    animation: gradientShift 8s ease infinite;
+}
+
+.fade-in-hero {
+    animation: heroFadeIn 1s ease-out forwards;
+}
+
+.hero-badge {
+    display: inline-block;
+    background: rgba(82, 183, 136, 0.12);
+    border: 1px solid rgba(82, 183, 136, 0.35);
+    color: var(--accent-green);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 6px 16px;
+    border-radius: 50px;
+    margin-bottom: 1.2rem;
+    letter-spacing: 0.5px;
+}
+
+.typing-cursor {
+    display: inline-block;
+    color: var(--accent-green);
+    font-weight: 300;
+    animation: blink 0.8s ease-in-out infinite;
+}
+
 .hero-content {
     position: relative;
     z-index: 2;
-    max-width: 800px;
+    max-width: 680px;
+    flex: 1;
 }
 
 .hero-content h1 {
@@ -261,7 +320,129 @@ body::after {
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
+    min-height: 2rem;
 }
+
+/* FLOATING PREVIEW CARD */
+.hero-preview-card {
+    position: relative;
+    z-index: 2;
+    background: rgba(13, 40, 24, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(82, 183, 136, 0.25);
+    border-radius: 20px;
+    padding: 1.5rem;
+    min-width: 240px;
+    max-width: 270px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(82, 183, 136, 0.1);
+    flex-shrink: 0;
+}
+
+.float-card {
+    animation: float 4s ease-in-out infinite;
+}
+
+.preview-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 1rem;
+}
+
+.preview-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+.preview-dot.green  { background: #2ecc71; }
+.preview-dot.yellow { background: #f1c40f; }
+.preview-dot.red    { background: #e74c3c; }
+
+.preview-title {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.5);
+    margin-left: 6px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.preview-crop-label {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 0.6rem;
+}
+
+.preview-yield {
+    margin-bottom: 1.2rem;
+}
+
+.preview-yield-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--accent-green);
+    line-height: 1;
+}
+
+.preview-yield-unit {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.5);
+    margin-left: 4px;
+}
+
+.preview-nutrients {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 1rem;
+}
+
+.preview-nutrient {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pn-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.6);
+    width: 12px;
+}
+
+.pn-bar {
+    flex: 1;
+    height: 5px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.pn-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s ease;
+}
+
+.pn-val {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.5);
+    width: 20px;
+    text-align: right;
+}
+
+.preview-footer {
+    border-top: 1px solid rgba(255,255,255,0.07);
+    padding-top: 0.75rem;
+}
+
+.preview-confidence {
+    font-size: 0.75rem;
+    color: var(--accent-green);
+    font-weight: 500;
+}
+
 
 .hero-stats {
     display: flex;
