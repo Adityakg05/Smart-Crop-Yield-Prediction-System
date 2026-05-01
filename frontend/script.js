@@ -100,6 +100,27 @@ function initCountUp() {
     statNumbers.forEach(el => observer.observe(el));
 }
 
+/**
+ * ================================
+ * HOW IT WORKS STEP ANIMATIONS
+ * ================================
+ */
+function initStepAnimations() {
+    const steps = document.querySelectorAll('.step-fade-in, .step-slide-in, .step-pop-in, .step-glow');
+    if (!steps.length) return;
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.3 });
+
+    steps.forEach(el => observer.observe(el));
+}
+
 
 /**
  * ================================
@@ -483,6 +504,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize count-up animation for hero stats
     initCountUp();
+
+    // Initialize How It Works step animations
+    initStepAnimations();
 
     // Attach form submit
     const predictionForm = document.getElementById('prediction-form');
