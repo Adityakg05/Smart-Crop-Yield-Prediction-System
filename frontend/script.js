@@ -440,6 +440,7 @@ function initCharts() {
                 data: [0, 0, 0],
                 backgroundColor: [chartColors.nitrogen, chartColors.phosphorus, chartColors.potassium],
                 borderRadius: 8,
+                barThickness: 40,
                 hoverBackgroundColor: ['#34e881', '#2fcf73', '#1b7a44'],
                 borderWidth: 0
             }]
@@ -465,10 +466,19 @@ function initCharts() {
             scales: {
                 y: { 
                     beginAtZero: true,
-                    grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                    grid: { 
+                        color: 'rgba(255, 255, 255, 0.05)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.5)'
+                    }
                 },
                 x: {
-                    grid: { display: false }
+                    grid: { display: false },
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.7)'
+                    }
                 }
             }
         }
