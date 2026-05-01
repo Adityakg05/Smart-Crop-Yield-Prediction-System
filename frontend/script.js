@@ -260,10 +260,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (currentUser) {
         const user = JSON.parse(currentUser);
         const userNameEl = document.getElementById('userName');
+        const userAvatarEl = document.getElementById('userAvatar');
         const userGreeting = document.getElementById('userGreeting');
         
         if (userNameEl) {
             userNameEl.textContent = user.name || 'Farmer';
+        }
+        if (userAvatarEl && user.name) {
+            userAvatarEl.textContent = user.name.charAt(0).toUpperCase();
         }
         if (userGreeting) {
             userGreeting.style.display = 'flex';
