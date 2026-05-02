@@ -1,28 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dashboard-html">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Crop Yield Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=1.1">
+    <link rel="stylesheet" href="style.css?v=13.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js?v=3.8" defer></script>
+    <script>
+        // Immediate, blocking auth check to prevent UI flash
+        if (!localStorage.getItem('currentUser')) {
+            window.location.replace('modern-login.html');
+        }
+    </script>
 </head>
-<body>
+<body class="dashboard-body">
     <!-- NAVBAR -->
     <nav class="navbar">
         <div class="nav-container">
-            <a href="index.html" class="logo">
+            <div class="nav-left">
                 <span class="logo-icon">🌾</span>
-                <span>Crop Yield Pro</span>
-            </a>
-            <div class="nav-links">
-                <div class="user-greeting" id="userGreeting">
-                    <div class="user-avatar" id="userAvatar">U</div>
-                    <span id="userName">Farmer</span>
+                <span class="brand">Crop Yield Pro</span>
+            </div>
+
+            <div class="nav-right">
+                <div class="profile" id="userGreeting">
+                    <span class="avatar" id="userAvatar">A</span>
+                    <span id="userName">aditya</span>
                 </div>
-                <a href="index.html">Home</a>
-                <a href="#" class="btn-nav-login btn-outline" id="auth-btn" onclick="logout()">Logout</a>
+
+                <div class="nav-links">
+                    <a href="index.html">Home</a>
+                    <a href="index.html#features">Features</a>
+                    <a href="index.html#how-it-works">How It Works</a>
+                </div>
+
+                <a href="#" class="btn-logout" id="logout-btn" onclick="logout()">Logout</a>
             </div>
         </div>
     </nav>
@@ -30,6 +44,8 @@
     <!-- Global Alert Container -->
     <div id="alert" class="alert"></div>
 
+    <div class="dashboard-page-shell">
+    <main class="dashboard-main">
     <!-- DASHBOARD SECTION -->
     <section class="dashboard-section">
         <div class="dashboard-container">
@@ -38,68 +54,77 @@
                 <div class="form-card">
                     <h2>Crop Prediction Parameters</h2>
                     <form id="prediction-form" class="modern-form">
-                        <!-- Group: Weather -->
-                        <div class="form-group-section">
-                            <h3><span class="icon">⛅</span> Weather Conditions</h3>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="rainfall">Rainfall (mm)</label>
-                                    <input type="number" id="rainfall" step="any" required placeholder="e.g. 150">
+                        <div class="form-content">
+                            <!-- Group: Weather -->
+                            <div class="form-group-section">
+                                <h3><span class="icon">⛅</span> Weather Conditions</h3>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="rainfall">Rainfall (mm)</label>
+                                        <input type="number" id="rainfall" min="0" max="500" step="0.1" required placeholder="0–500 mm">
+                                        <span class="validation-msg" id="msg-rainfall"></span>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="temperature">Temp (°C)</label>
+                                        <input type="number" id="temperature" min="0" max="50" step="0.1" required placeholder="0–50 °C">
+                                        <span class="validation-msg" id="msg-temperature"></span>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="humidity">Humidity (%)</label>
+                                        <input type="number" id="humidity" min="10" max="100" step="0.1" required placeholder="10–100 %">
+                                        <span class="validation-msg" id="msg-humidity"></span>
+                                    </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="temperature">Temp (°C)</label>
-                                    <input type="number" id="temperature" step="any" required placeholder="e.g. 25">
+                            </div>
+
+                            <!-- Group: Soil -->
+                            <div class="form-group-section">
+                                <h3><span class="icon">🌱</span> Soil Nutrients</h3>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="N">Nitrogen (N)</label>
+                                        <input type="number" id="N" min="0" max="150" step="0.1" required placeholder="0–150">
+                                        <span class="validation-msg" id="msg-N"></span>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="P">Phosphorus (P)</label>
+                                        <input type="number" id="P" min="0" max="150" step="0.1" required placeholder="0–150">
+                                        <span class="validation-msg" id="msg-P"></span>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="K">Potassium (K)</label>
+                                        <input type="number" id="K" min="0" max="200" step="0.1" required placeholder="0–200">
+                                        <span class="validation-msg" id="msg-K"></span>
+                                    </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="humidity">Humidity (%)</label>
-                                    <input type="number" id="humidity" step="any" required placeholder="e.g. 60">
+                            </div>
+
+                            <!-- Group: Farm -->
+                            <div class="form-group-section">
+                                <h3><span class="icon">🚜</span> Farm Details</h3>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="area">Area (Hectares)</label>
+                                        <input type="number" id="area" min="0.1" max="100" step="0.1" required placeholder="0.1–100">
+                                        <span class="validation-msg" id="msg-area"></span>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="state">State</label>
+                                        <select id="state" required>
+                                            <option value="">Select State</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="crop">Crop</label>
+                                        <select id="crop" required>
+                                            <option value="">Select Crop</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Group: Soil -->
-                        <div class="form-group-section">
-                            <h3><span class="icon">🌱</span> Soil Nutrients</h3>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="N">Nitrogen (N)</label>
-                                    <input type="number" id="N" step="any" required placeholder="e.g. 50">
-                                </div>
-                                <div class="form-group">
-                                    <label for="P">Phosphorus (P)</label>
-                                    <input type="number" id="P" step="any" required placeholder="e.g. 40">
-                                </div>
-                                <div class="form-group">
-                                    <label for="K">Potassium (K)</label>
-                                    <input type="number" id="K" step="any" required placeholder="e.g. 30">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Group: Farm -->
-                        <div class="form-group-section">
-                            <h3><span class="icon">🚜</span> Farm Details</h3>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="area">Area (Hectares)</label>
-                                    <input type="number" id="area" step="any" required placeholder="e.g. 2">
-                                </div>
-                                <div class="form-group">
-                                    <label for="state">State</label>
-                                    <select id="state" required>
-                                        <option value="">Select State</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="crop">Crop</label>
-                                    <select id="crop" required>
-                                        <option value="">Select Crop</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button type="submit" id="predictBtn" onclick="predict(event)" class="btn btn-primary btn-full">
+                        <button type="submit" id="predictBtn" class="btn btn-primary btn-full" disabled onclick="console.log('Button clicked! Triggering prediction...');">
                             <span class="btn-text">Predict Yield</span>
                         </button>
                     </form>
@@ -108,38 +133,53 @@
 
             <!-- RIGHT COLUMN: RESULTS & CHARTS -->
             <div class="dashboard-right">
-                <!-- Result Card -->
-                <div class="result-card fade-in" id="resultSection">
-                    <div class="result-header">
-                        <h3>Predicted Yield</h3>
-                        <div class="badge">Model-Based Prediction</div>
+                <div class="dashboard-right-grid">
+                    <!-- Predicted Yield & Insights -->
+                    <div class="result-card fade-in" id="resultSection">
+                        <div class="result-header">
+                            <h3>Predicted Yield</h3>
+                            <div class="badge">Model-Based Prediction</div>
+                        </div>
+                        <p class="result-info">Prediction based on trained dataset</p>
+                        <div class="result-body">
+                            <div class="result-col result-col--metrics">
+                                <div class="main-yield">
+                                    <span id="resultValue" class="highlight-number">--</span>
+                                    <span class="unit">t/ha</span>
+                                </div>
+                                <p class="yield-range-text" id="yieldRangeText" style="display: none; font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-top: -5px; margin-bottom: 10px;">
+                                    Range: <span id="yieldRangeValue">--</span> t/ha
+                                </p>
+                                <dl class="result-metrics">
+                                    <div class="result-metric-row">
+                                        <dt>Confidence score</dt>
+                                        <dd id="confidence" class="confidence-badge">--%</dd>
+                                    </div>
+                                    <div id="confidenceFeedback" class="confidence-feedback" style="display: none; font-size: 0.85rem; margin-top: 5px; padding: 8px; border-radius: 6px; line-height: 1.4;"></div>
+                                    <div class="result-metric-row">
+                                        <dt>Estimated total yield</dt>
+                                        <dd id="totalYield">-- T</dd>
+                                    </div>
+                                </dl>
+                            </div>
+                            <div class="result-col result-col--insights">
+                                <div class="recommendations-box" id="recommendationsBox">
+                                    <h4><span class="icon">💡</span> Agricultural Insights</h4>
+                                    <ul id="recommendationsList">
+                                        <li class="insights-placeholder">Run <strong>Predict Yield</strong> to see tailored insights for your inputs.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <p class="result-info">Prediction based on trained dataset</p>
-                    <div class="result-body">
-                        <div class="main-yield">
-                            <span id="resultValue" class="highlight-number">--</span>
-                            <span class="unit">t/ha</span>
-                        </div>
-                        <div class="total-yield-box">
-                            <p>Estimated Total Yield: <strong id="totalYield">-- T</strong></p>
-                            <p>Confidence Score: <strong id="confidence">--%</strong></p>
-                        </div>
-                        <div class="recommendations-box" id="recommendationsBox" style="display: none;">
-                            <h4><span class="icon">💡</span> Agricultural Insights</h4>
-                            <ul id="recommendationsList"></ul>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Charts -->
-                <div class="charts-container fade-in">
-                    <div class="chart-card">
+                    <div class="chart-card fade-in chart-card--nutrient">
                         <h4>Nutrient Profile</h4>
                         <div class="chart-wrapper">
                             <canvas id="barChart"></canvas>
                         </div>
                     </div>
-                    <div class="chart-card">
+                    <div class="chart-card fade-in chart-card--weather">
                         <h4>Weather Profile</h4>
                         <div class="chart-wrapper">
                             <canvas id="pieChart"></canvas>
@@ -149,14 +189,16 @@
             </div>
         </div>
     </section>
+    </main>
 
     <!-- FOOTER -->
-    <footer class="footer">
+    <footer class="footer footer--dashboard">
         <div class="container">
             <p>&copy; 2026 Crop Yield Pro. All rights reserved. | Powered by AI | Built for Farmers</p>
         </div>
     </footer>
+</div>
 
-    <script src="script.js"></script>
+    <!-- script moved to head with defer -->
 </body>
 </html>
