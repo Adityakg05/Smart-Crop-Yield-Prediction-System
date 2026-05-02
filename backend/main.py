@@ -1,10 +1,12 @@
 from fastapi import FastAPI, HTTPException, Depends, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import List
 from contextlib import asynccontextmanager
 from datetime import datetime
 import os
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
@@ -55,22 +57,32 @@ app.add_middleware(
 frontend_dir = os.path.join(os.path.dirname(__file__), '..', 'frontend')
 app.mount("/frontend", StaticFiles(directory=frontend_dir, html=True), name="frontend")
 
+
+@app.get("/dashboard")
+async def dashboard_route():
+    """Crop prediction UI (same as /frontend/dashboard.html)."""
+    return RedirectResponse(url="/frontend/dashboard.html", status_code=302)
+
 # Input schema defining the expected payload
 class PredictionInput(BaseModel):
-    rainfall: float
-    temperature: float
-    humidity: float
-    N: float
-    P: float
-    K: float
-    area: float
+    rainfall: float = Field(..., ge=0, le=500)
+    temperature: float = Field(..., ge=0, le=50)
+    humidity: float = Field(..., ge=10, le=100)
+    N: float = Field(..., ge=0, le=150)
+    P: float = Field(..., ge=0, le=150)
+    K: float = Field(..., ge=0, le=200)
+    area: float = Field(..., ge=0.1, le=100)
     state: str
     crop: str
 
 # Output schema defining the response payload
 class PredictionOutput(BaseModel):
     predicted_yield: float
-    confidence_score: float = 0.92
+    yield_min: float
+    yield_max: float
+    confidence_score: float
+    warnings: List[str] = []
+    is_valid_combo: bool = True
 
 # Authentication functions
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
@@ -133,7 +145,7 @@ async def register_user(user: UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Email already registered")
 
     user_obj = create_user(db=db, user=user)
-    access_token = create_access_token(data={"sub": user_obj.username})
+    access_token = create_access_token(data={"sub": str(user_obj.username)})
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.post("/token", response_model=Token)
@@ -148,7 +160,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         )
     user.last_login = datetime.utcnow()
     db.commit()
-    access_token = create_access_token(data={"sub": user.username})
+    access_token = create_access_token(data={"sub": str(user.username)})
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.get("/users/me")
@@ -171,10 +183,26 @@ async def predict(
     """
     Predict crop yield based on input features (requires authentication).
     """
+    print(f"DEBUG: Received prediction request: {data}")
     try:
         input_dict = data.dict()
-        yield_pred = model_instance.predict(input_dict)
-        return PredictionOutput(predicted_yield=yield_pred)
+        result = model_instance.predict(input_dict)
+        
+        # Helper to handle NaN/Inf values which are not JSON serializable
+        def sanitize(val):
+            import math
+            if isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
+                return 0.0
+            return val
+
+        return PredictionOutput(
+            predicted_yield=sanitize(result["yield"]),
+            yield_min=sanitize(result["yield_min"]),
+            yield_max=sanitize(result["yield_max"]),
+            confidence_score=sanitize(result["confidence"]),
+            warnings=result["warnings"],
+            is_valid_combo=result.get("is_valid_combo", True)
+        )
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
@@ -219,4 +247,4 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)

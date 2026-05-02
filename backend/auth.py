@@ -89,8 +89,10 @@ def get_user_by_email(db: Session, email: str):
     return db.query(User).filter(User.email == email).first()
 
 def authenticate_user(db: Session, username: str, password: str):
-    """Authenticate a user."""
+    """Authenticate a user by username or by email (login form sends email as username)."""
     user = get_user_by_username(db, username)
+    if not user:
+        user = get_user_by_email(db, username.strip() if username else "")
     if not user:
         return False
     if not verify_password(password, user.hashed_password):

@@ -13,8 +13,7 @@ class CropYieldModel:
         # Enhanced feature set using all available data
         self.categorical_features = ['state', 'crop', 'district']
         self.numerical_features = [
-            'rainfall', 'temperature', 'humidity', 'N', 'P', 'K', 'area',
-            'production', 'year', 'productivity_index', 'seasonal_factor', 'district_factor'
+            'rainfall', 'temperature', 'humidity', 'N', 'P', 'K', 'area', 'year'
         ]
         self.target = 'yield'
         
@@ -46,6 +45,12 @@ class CropYieldModel:
         
         self.is_trained = False
         self.metrics = {"rmse": None, "r2": None}
+        
+        # Reliability tracking
+        self.training_ranges = {}
+        self.seen_combinations = set() # (state, crop)
+        self.seen_crops = set()
+        self.seen_states = set()
 
     def preprocess_raw_dataset(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -269,7 +274,21 @@ class CropYieldModel:
             print(f"  Model hyperparameters: n_estimators=100, random_state=42")
             self.pipeline.fit(X_train_balanced, y_train_balanced)
             self.is_trained = True
-            print(f"  [OK] Model training completed")
+            
+            # Step 6.1: Capture reliability metadata
+            for feat in self.numerical_features:
+                self.training_ranges[feat] = {
+                    'min': float(df[feat].min()),
+                    'max': float(df[feat].max())
+                }
+            
+            # Use original df to capture real combinations (not balanced ones)
+            for _, row in df.iterrows():
+                self.seen_combinations.add((row['state'], row['crop']))
+                self.seen_crops.add(row['crop'])
+                self.seen_states.add(row['state'])
+                
+            print(f"  [OK] Model training and reliability metadata captured")
             
             # Step 7: Evaluation on original (unbalanced) test data
             print(f"\n[Step 7] Evaluating on original UNBALANCED test data...")
@@ -331,47 +350,103 @@ class CropYieldModel:
         self.is_trained = True
         print("Dummy model training completed.")
 
-    def predict(self, input_data: dict) -> float:
+
+
+    def predict(self, input_data: dict) -> tuple:
         """
-        Predicts crop yield for a given input dictionary.
-        Handles missing features by providing sensible defaults.
+        Predicts crop yield and calculates a dynamic confidence score with warnings.
+        Returns: (prediction, confidence_score, warnings_list)
         """
         if not self.is_trained:
             raise ValueError("Model is not trained yet.")
             
-        # Ensure all required columns exist with defaults if missing
         full_input = input_data.copy()
-        
-        # Add missing categorical features with defaults
         if 'district' not in full_input:
             full_input['district'] = 'Unknown'
             
-        # Add missing numerical features with defaults
-        defaults = {
-            'production': 100.0,
-            'year': 2024,
-            'productivity_index': 1.0,
-            'seasonal_factor': 1.0,
-            'district_factor': 1.0
-        }
-        
+        defaults = {'year': 2024}
         for feat, val in defaults.items():
             if feat not in full_input:
                 full_input[feat] = val
                 
         X_pred = pd.DataFrame([full_input])
+        X_pred = X_pred[self.numerical_features + self.categorical_features]
         
-        # Select only the features the model was trained on
-        try:
-            X_pred = X_pred[self.numerical_features + self.categorical_features]
-        except KeyError as e:
-            missing = str(e)
-            raise ValueError(f"Missing critical features for prediction: {missing}")
+        # DETECT STATE + CROP VALIDITY
+        # Before prediction, check if the selected (state, crop) combination exists in the training dataset.
+        warnings = []
+        confidence_modifier = 0.0
         
+        state = full_input.get('state')
+        crop = full_input.get('crop')
+        
+        valid_combinations = list(self.seen_combinations)
+        if (state, crop) in valid_combinations:
+            is_valid_combo = True
+        else:
+            is_valid_combo = False
+            warnings.append("Limited data available for this combination. Result is approximate.")
+            confidence_modifier -= 0.15
+            
+        # 1. Prediction
         prediction = self.pipeline.predict(X_pred)[0]
         
-        # Ensure yield is not negative
-        return max(0.0, float(prediction))
+        # 2. Reliability Logic (Continued)
+        
+        # Check Training Edges (Numerical)
+        edge_count = 0
+        for feat in self.numerical_features:
+            if feat in self.training_ranges and feat in full_input:
+                val = full_input[feat]
+                fmin = self.training_ranges[feat]['min']
+                fmax = self.training_ranges[feat]['max']
+                frange = fmax - fmin
+                
+                if frange > 0:
+                    # Within 5% of boundaries
+                    if val < fmin + (frange * 0.05) or val > fmax - (frange * 0.05):
+                        edge_count += 1
+        
+        if edge_count >= 2:
+            warnings.append("Prediction may be less accurate due to unusual input conditions")
+            confidence_modifier -= 0.1
+        
+        # 3. Base Confidence from RandomForest variance
+        try:
+            X_transformed = self.pipeline.named_steps['preprocessor'].transform(X_pred)
+            all_tree_preds = np.array([
+                tree.predict(X_transformed)[0] 
+                for tree in self.pipeline.named_steps['regressor'].estimators_
+            ])
+            mean_val = np.mean(all_tree_preds)
+            if mean_val > 0:
+                cv = np.std(all_tree_preds) / mean_val
+                base_confidence = max(0.8, min(0.98, 1.0 - cv))
+            else:
+                base_confidence = 0.85
+        except:
+            base_confidence = 0.92
+            
+        # Final Confidence
+        confidence = base_confidence + confidence_modifier
+        
+        # Clamp values: min(max(confidence, 60), 95)
+        final_confidence = max(0.60, min(0.95, confidence))
+        
+        # 4. Calculate Range (Pro Level)
+        # 95% confidence interval based on tree variance
+        std_val = np.std(all_tree_preds) if 'all_tree_preds' in locals() else prediction * 0.1
+        yield_min = max(0.0, prediction - 1.96 * std_val)
+        yield_max = prediction + 1.96 * std_val
+            
+        return {
+            "yield": float(prediction),
+            "yield_min": float(yield_min),
+            "yield_max": float(yield_max),
+            "confidence": float(final_confidence),
+            "warnings": warnings,
+            "is_valid_combo": is_valid_combo
+        }
 
 # Create a singleton instance to be used by the FastAPI app
 model_instance = CropYieldModel()
