@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | Crop Yield Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=1.1">
+    <link rel="stylesheet" href="style.css?v=13.0">
     <style>
         .login-container {
             min-height: 100vh;
@@ -203,9 +203,81 @@
         .back-link a:hover {
             color: var(--primary-green);
         }
+
+        .performance-card {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-top: 6px;
+        }
+
+        .performance-card:hover::after {
+            content: attr(title);
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 10px;
+        }
+
+        .stat-card-title {
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .stat-card-description {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 14px;
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+        }
+
+        .card-content {
+            text-align: left;
+            padding: 20px;
+        }
     </style>
+
+    <script>
+        // If already logged in, skip login page
+        if (localStorage.getItem('currentUser')) {
+            window.location.replace('dashboard.html');
+        }
+    </script>
 </head>
 <body>
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-left">
+                <span class="logo-icon">🌾</span>
+                <span class="brand">Crop Yield Pro</span>
+            </div>
+
+            <div class="nav-right">
+                <div class="profile" id="userGreeting" style="display: none;">
+                    <span class="avatar" id="userAvatar">A</span>
+                    <span id="userName">aditya</span>
+                </div>
+
+                <div class="nav-links">
+                    <a href="index.html">Home</a>
+                    <a href="index.html#features">Features</a>
+                    <a href="index.html#how-it-works">How It Works</a>
+                </div>
+
+                <a href="modern-login.html" class="btn-dashboard" id="auth-btn">Login</a>
+                <a href="#" class="btn-logout" id="logout-btn" style="display: none;" onclick="logout()">Logout</a>
+            </div>
+        </div>
+    </nav>
+
     <div class="login-container">
         <div class="login-box">
             <div class="login-header">
@@ -222,14 +294,14 @@
             <!-- LOGIN FORM -->
             <div id="login" class="form-section active">
                 <div id="login-alert" class="alert"></div>
-                <form id="loginForm" onsubmit="handleLogin(event)">
+                <form id="loginForm" autocomplete="off" onsubmit="handleLogin(event)">
                     <div class="form-group">
                         <label for="login-email">Email</label>
-                        <input type="email" id="login-email" placeholder="Enter your email" required>
+                        <input type="email" id="login-email" name="user_email" autocomplete="new-email" placeholder="Enter your email" required>
                     </div>
                     <div class="form-group">
                         <label for="login-password">Password</label>
-                        <input type="password" id="login-password" placeholder="Enter your password" required>
+                        <input type="password" id="login-password" name="user_password" autocomplete="new-password" placeholder="Enter your password" required>
                     </div>
                     <button type="submit" class="login-btn" id="loginBtn">
                         <span>Sign In</span>
@@ -269,7 +341,7 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=3.2"></script>
     <script>
         function switchTab(tab) {
             document.querySelectorAll('.form-section').forEach(el => el.classList.remove('active'));
