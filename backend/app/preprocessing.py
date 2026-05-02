@@ -10,14 +10,9 @@ from typing import Tuple
 
 def handle_missing_values(df: pd.DataFrame, strategy: str = 'mean') -> pd.DataFrame:
     """
-    Handle missing values in the dataset.
-    
-    Args:
-        df: Input DataFrame
-        strategy: 'mean', 'median', 'forward_fill', or 'drop'
-    
-    Returns:
-        DataFrame with missing values handled
+    Agricultural datasets often have holes due to sensor failure or 
+    missing records. Imputing with the mean (or median) prevents the 
+    entire row from being wasted during training.
     """
     df = df.copy()
     
@@ -59,16 +54,9 @@ def remove_duplicates(df: pd.DataFrame, subset: list = None) -> pd.DataFrame:
 def remove_outliers(df: pd.DataFrame, columns: list, method: str = 'iqr', 
                    threshold: float = 1.5) -> pd.DataFrame:
     """
-    Remove outliers from numerical columns.
-    
-    Args:
-        df: Input DataFrame
-        columns: List of numerical column names
-        method: 'iqr' (Interquartile Range) or 'zscore'
-        threshold: IQR multiplier (1.5) or z-score threshold (3)
-    
-    Returns:
-        DataFrame with outliers removed
+    Data entry errors (like typing '1000' instead of '100') are common.
+    The Interquartile Range (IQR) method is used because it's less 
+    sensitive to the very outliers we are trying to remove than z-score.
     """
     df = df.copy()
     

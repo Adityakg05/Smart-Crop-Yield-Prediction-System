@@ -1,76 +1,68 @@
-# Python
+# ── Python ────────────────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
-*$py.class
 *.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
 *.egg
+*.egg-info/
+.eggs/
+dist/
+build/
 MANIFEST
 
-# Virtual environments
+# ── Virtual environments ───────────────────────────────────────────────────────
+.venv/
 venv/
-ENV/
 env/
-.venv
+ENV/
 
-# IDE and editor
+# ── Environment / secrets ──────────────────────────────────────────────────────
+.env
+.env.local
+.env.production
+.env.*.local
+*.secret
+
+# ── Database ───────────────────────────────────────────────────────────────────
+# The SQLite file is auto-created at startup — no need to version it
+backend/database/*.db
+*.sqlite
+*.sqlite3
+
+# ── Dataset (large binary, share via Google Drive / DVC instead) ───────────────
+backend/data/*.csv
+backend/data/*.xlsx
+backend/data/*.xls
+backend/data/*.parquet
+
+# ── Saved model artifacts ─────────────────────────────────────────────────────
+models/*.pkl
+models/*.joblib
+models/*.h5
+models/*.pth
+models/*.onnx
+
+# ── Logs ───────────────────────────────────────────────────────────────────────
+*.log
+logs/
+prediction_log.jsonl
+
+# ── IDE / editor ───────────────────────────────────────────────────────────────
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-.DS_Store
 
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# Logs
-*.log
-logs/
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Models and checkpoints
-models/*.pkl
-models/*.joblib
-models/*.h5
-models/*.pth
-
-# Data
-data/*.csv
-data/*.xlsx
-data/*.xls
-
-# Output files
-output/
-results/
-predictions/
-
-# Cache
-.cache/
-.pytest_cache/
-
-# OS specific
+# ── OS ─────────────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+
+# ── Test / coverage ────────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── Misc ────────────────────────────────────────────────────────────────────────
+.cache/
+output/
+results/

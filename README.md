@@ -1,278 +1,102 @@
-# 🌱 Smart Crop Yield Prediction System
+# 🌾 Smart Crop Yield Prediction System
 
-A machine learning-based simple system for predicting agricultural crop yields using environmental and soil parameters. This project demonstrates a complete ML pipeline with fair data preprocessing, balanced training, and realistic evaluation.
+**AI-powered forecasting for Indian agriculture.**
 
-## 🎯 Features
-
-- **User Authentication (JWT)**: Secure registration and login system with persistent sessions
-- **Personalized Dashboard**: User-specific greeting and data management
-- **Interactive Data Visualization**: Real-time charts for nutrient profiles and weather data using Chart.js
-- **Advanced ML Pipeline**: Proper data cleaning, train-test split, balanced sampling, and realistic evaluation
-- **Random Forest Model**: Robust ensemble learning with 100 trees
-- **Fair Training**: Balanced sampling on training data grouped by state (only applied to training, not test)
-- **FastAPI Backend**: RESTful API for predictions with built-in documentation
-- **Modern Frontend**: Responsive web interface for easy predictions
-- **Comprehensive Preprocessing**: Handles missing values, duplicates, and categorical encoding
-
-## 📊 ML Pipeline Architecture
-
-```
-1. Data Cleaning
-   ├─ Remove duplicates
-   ├─ Handle missing values
-   └─ Select relevant features
-
-2. Train-Test Split (80-20)
-   ├─ Training: 80%
-   └─ Testing: 20% (UNBALANCED for realistic evaluation)
-
-3. Balanced Sampling (TRAINING ONLY)
-   ├─ Group training data by state
-   ├─ Find minimum samples across states
-   └─ Sample equal rows from each state
-
-4. Model Training
-   └─ RandomForestRegressor (n_estimators=100)
-
-5. Evaluation (UNBALANCED TEST DATA)
-   ├─ RMSE: Root Mean Squared Error
-   └─ R²: Coefficient of Determination
-```
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Python 3.8+
-- pip or conda
-
-### Installation
-
-1. **Navigate to the project directory**:
-```bash
-cd "Crop Yield Prediction System"
-```
-
-2. **Install dependencies**:
-```bash
-pip install -r requirements.txt
-```
-
-3. **Prepare the dataset**:
-   - Place `dataset.csv` in the `data/` folder
-   - Dataset should contain agricultural yield data with state information
-
-### Running the System
-
-#### Start the Backend API
-
-From the `backend/` directory:
-```bash
-python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-The API will be available at: `http://127.0.0.1:8000`
-
-#### Access the Frontend
-
-Open `frontend/index.html` in your web browser or serve it with a local server:
-```bash
-# Using Python 3
-python -m http.server 5500 --directory frontend
-
-# Then open: http://127.0.0.1:5500
-```
-
-## 📁 Project Structure
-
-```
-crop-yield-prediction/
-│
-├── backend/
-│   ├── main.py              # FastAPI app (routes)
-│   ├── model.py             # ML training + prediction logic
-│   ├── preprocessing.py     # Data cleaning + feature engineering
-│   └── utils.py             # Helper functions
-│
-├── frontend/
-│   ├── index.html           # UI structure
-│   ├── style.css            # Styling
-│   └── script.js            # API calls + logic
-│
-├── data/
-│   └── dataset.csv          # Raw agricultural dataset
-│
-├── models/
-│   └── (future) trained_model.pkl
-│
-├── requirements.txt
-├── README.md
-└── .gitignore
-```
-
-## 🔌 API Endpoints
-
-### POST `/predict`
-**Predict crop yield based on input parameters**
-
-**Request Body**:
-```json
-{
-  "rainfall": 200.5,
-  "temperature": 25.4,
-  "humidity": 65.2,
-  "N": 80.5,
-  "P": 40.2,
-  "K": 35.1,
-  "area": 100,
-  "state": "Punjab",
-  "crop": "Rice"
-}
-```
-
-**Response**:
-```json
-{
-  "predicted_yield": 2150.75
-}
-```
-
-### GET `/metrics`
-**Get model performance metrics**
-
-**Response**:
-```json
-{
-  "rmse": 156.23,
-  "r2_score": 0.8234
-}
-```
-
-### GET `/`
-**Welcome message**
-
-## 🧠 Model Details
-
-- **Algorithm**: Random Forest Regressor
-- **Trees**: 100
-- **Features**: 7 numerical + 2 categorical
-- **Scaling**: StandardScaler for numerical features
-- **Encoding**: OneHotEncoder for categorical features
-
-### Input Features
-
-**Numerical**:
-- Rainfall (mm)
-- Temperature (°C)
-- Humidity (%)
-- Nitrogen (N)
-- Phosphorus (P)
-- Potassium (K)
-- Area (hectares)
-
-**Categorical**:
-- State (Indian state)
-- Crop (type of crop)
-
-## 📈 Data Processing
-
-1. **Raw Data**: Extracted from agricultural database with crop-specific yields
-2. **Preprocessing**: 
-   - Extracted yield data from crop-specific columns
-   - Created synthetic environmental features based on yield patterns
-   - Removed duplicates and invalid records
-   - Applied scaling and encoding
-
-3. **Train-Test Split**: 80% training, 20% testing
-4. **Balanced Sampling**: Applied to training data only
-   - Groups by state
-   - Samples equal rows from each state
-   - Ensures fair representation during training
-
-5. **Evaluation**: Performed on original unbalanced test data for realistic metrics
-
-## ⚖️ Fair ML Practices
-
-✅ **Balanced Training**
-- Prevents state bias during model training
-- Equal representation across geographic regions
-
-✅ **Unbiased Testing**
-- Test set NOT balanced
-- Reflects real-world imbalanced data distribution
-- Realistic performance metrics
-
-✅ **Proper Preprocessing**
-- Separate preprocessing for train and test
-- No data leakage between datasets
-
-## 📊 Example Prediction
-
-Input parameters:
-- Rainfall: 250 mm
-- Temperature: 26°C
-- Humidity: 60%
-- N: 100 kg
-- P: 50 kg
-- K: 40 kg
-- Area: 10 hectares
-- State: Punjab
-- Crop: Wheat
-
-Expected Output:
-- Predicted Yield: ~2200-2400 kg/hectare
-
-## 🔧 Technologies Used
-
-**Backend**:
-- FastAPI: Modern web framework
-- scikit-learn: ML algorithms
-- pandas: Data manipulation
-- numpy: Numerical computing
-
-**Frontend**:
-- HTML5: Structure
-- CSS3: Styling
-- JavaScript: Interactivity
-
-## 📝 Model Performance
-
-The model is evaluated on unbalanced test data to ensure realistic performance metrics:
-- RMSE (Root Mean Squared Error): Measures prediction error magnitude
-- R² Score: Proportion of variance explained by the model
-
-## 🐛 Troubleshooting
-
-**Cannot connect to server**:
-- Ensure backend is running: `python -m uvicorn main:app --host 0.0.0.0 --port 8000`
-- Check if port 8000 is available
-
-**Dataset issues**:
-- Verify `dataset.csv` exists in `data/` folder
-- Check CSV format and column names
-- The system falls back to dummy data if dataset is invalid
-
-**Port already in use**:
-```bash
-# Use different port
-python -m uvicorn main:app --host 0.0.0.0 --port 8001
-```
-
-## 📚 References
-
-- [scikit-learn Documentation](https://scikit-learn.org/)
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [pandas Documentation](https://pandas.pydata.org/)
-
-## 📄 License
-
-This project is open source and available under the MIT License.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit issues or pull requests.
+[![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104-009688?style=flat&logo=fastapi)](https://fastapi.tiangolo.com)
+[![Vercel](https://img.shields.io/badge/Frontend-Vercel-000000?style=flat&logo=vercel)](https://vercel.com)
+[![Render](https://img.shields.io/badge/Backend-Render-46E3B7?style=flat&logo=render)](https://render.com)
 
 ---
 
-**Last Updated**: May 1, 2026, 06:15 PM
-**Version**: 2.0.0
+## Project Overview
+
+This system provides Indian farmers with instant, localized crop yield estimates. By combining historical district-level agricultural data with soil and environmental inputs (NPK, Rainfall, Temperature), the system helps stakeholders make data-driven decisions about crop selection and farm management.
+
+## Key Features
+
+- **Predictive Yield Modeling** — Estimates yield in Tonnes/Hectare based on real-world agricultural parameters.
+- **JWT-Protected Dashboard** — Secure access to prediction tools and historical logs.
+- **Agronomic Validation** — Ensures inputs fall within physically possible and agronomically sensible ranges.
+- **Modern UI** — High-contrast emerald theme with interactive Chart.js visualizations.
+- **Dynamic Risk Assessment** — Flags suspicious predictions and provides environmental warnings (e.g., heat stress).
+
+---
+
+## Design Decisions & Logic
+
+### 🧠 Model Choice: Random Forest
+We chose **RandomForestRegressor** over simpler linear models because agricultural data is inherently non-linear. The relationship between yield and temperature, for instance, isn't a straight line — there are optimal thresholds and tipping points. RandomForest handles these interactions and outliers robustly without requiring complex feature engineering.
+
+### 📊 Dataset Limitations
+The primary dataset consists of ~32,000 district-level records from 1997–2020. Since environmental data (Rainfall/Temp) wasn't available in the same source, we use **synthetic priors** based on crop-type averages. While accurate for demonstration, a production version would integrate real-time sensor or satellite weather data.
+
+### 🌾 Crop Factor Logic
+A 'good' yield for Wheat (high volume) is mathematically different from a 'good' yield for Cotton (low volume). Our **Crop Influence Factors** normalize the model's bias, ensuring that predictions remain sensitive to environmental shifts even for low-yield crops.
+
+---
+
+## Project Structure
+
+```text
+crop-yield-pro/
+│
+├── backend/
+│   ├── app/
+│   │   ├── main.py            # FastAPI entry point & routes
+│   │   ├── model.py           # RandomForest pipeline & training
+│   │   ├── auth.py            # JWT Auth & User logic
+│   │   ├── data_processing.py # CSV cleanup & stats (formerly helpers)
+│   │   ├── prediction_utils.py# Model IO & range validation (formerly utils)
+│   │   └── preprocessing.py   # Outlier removal & imputation
+│   │
+│   ├── database/
+│   │   └── crop_yield.db      # SQLite persistent storage
+│   ├── data/
+│   │   └── dataset.csv        # Historical stats (gitignored)
+│   ├── requirements.txt       # Backend dependencies
+│   └── render.yaml            # Render Blueprint config
+│
+├── frontend/
+│   ├── assets/                # Design system (CSS/JS/Images)
+│   ├── pages/                 # index, dashboard, login
+│   └── vercel.json            # Vercel deployment config
+│
+├── README.md
+├── .gitignore
+└── LICENSE
+```
+
+---
+
+## Deployment
+
+### Backend (Render)
+1. Push to GitHub.
+2. Connect repo to Render as a **Web Service**.
+3. Set `SECRET_KEY` environment variable.
+4. Render will auto-detect the `backend/render.yaml` blueprint.
+
+### Frontend (Vercel)
+1. Edit the `apiUrl` in your HTML files to point to your Render instance.
+2. Push to GitHub.
+3. Vercel will deploy the `frontend/` directory automatically.
+
+---
+
+## Local Setup
+
+```bash
+# 1. Install dependencies
+pip install -r backend/requirements.txt
+
+# 2. Start the API
+uvicorn backend.app.main:app --reload
+
+# 3. Access the dashboard
+# Open frontend/pages/index.html in your browser
+```
+
+---
+
+*Developed by [Aditya](https://github.com/Adityakg05).*

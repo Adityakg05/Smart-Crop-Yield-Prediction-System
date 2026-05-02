@@ -1,16 +1,9 @@
-console.log("🚀 script.js v3.6: System Initializing...");
-
-/**
- * Smart Crop Yield Prediction System
- * Main JavaScript File for API Integration and User Interactions
- */
-
-// API Configuration
-// API Configuration
-// API Configuration
-const API_BASE_URL = (window.location.protocol === 'http:' || window.location.protocol === 'https:') 
-    ? (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1') ? 'http://127.0.0.1:8000' : window.location.origin)
-    : 'http://127.0.0.1:8000'; // Default to localhost if opened as file
+// In production, set window.APP_CONFIG = { apiUrl: 'https://your-app.onrender.com' }
+// in a <script> tag before this file loads (see each HTML page's <head>).
+// Locally it falls back to 127.0.0.1:8000 automatically.
+const API_BASE_URL = (window.APP_CONFIG && window.APP_CONFIG.apiUrl)
+    ? window.APP_CONFIG.apiUrl
+    : 'http://127.0.0.1:8000';
 
 /**
  * ================================
@@ -278,9 +271,9 @@ function navigateToDashboard() {
         if (pathname && pathname.endsWith('.html')) {
             target = pathname.slice(0, pathname.lastIndexOf('/') + 1) + 'dashboard.html';
         } else if (pathname && pathname.includes('/frontend')) {
-            target = '/frontend/dashboard.html';
+            target = '/frontend/pages/dashboard.html';
         } else if (origin && (origin.includes('127.0.0.1') || origin.includes('localhost'))) {
-            target = '/frontend/dashboard.html';
+            target = '/frontend/pages/dashboard.html';
         }
     } catch (e) {
         target = 'dashboard.html';
@@ -443,7 +436,7 @@ function logout() {
     } catch (e) {
         /* ignore storage errors (private mode, etc.) */
     }
-    window.location.href = 'modern-login.html';
+    window.location.href = 'login.html';
 }
 
 /**
@@ -498,62 +491,50 @@ function checkFormValidityForPredict(triggerUI = false) {
 
 async function predict(event) {
     if (event) event.preventDefault();
-    
-    // Final check for valid inputs before processing
+
     if (!checkFormValidityForPredict()) {
-        alert("Input out of realistic range. Please enter valid agricultural data.");
+        alert("Some inputs are outside realistic agricultural ranges. Please check the highlighted fields.");
         return;
     }
     
-    // STEP 9: DEBUG LOGS
-    console.log("Predict clicked. Validating inputs...");
-    
-    // STEP 4: INPUT VALIDATION
-    const rainfall = document.getElementById('rainfall')?.value;
+    const rainfall    = document.getElementById('rainfall')?.value;
     const temperature = document.getElementById('temperature')?.value;
-    const humidity = document.getElementById('humidity')?.value;
-    const N = document.getElementById('N')?.value;
-    const P = document.getElementById('P')?.value;
-    const K = document.getElementById('K')?.value;
-    const area = document.getElementById('area')?.value;
-    const state = document.getElementById('state')?.value;
-    const crop = document.getElementById('crop')?.value;
+    const humidity    = document.getElementById('humidity')?.value;
+    const nitrogen    = document.getElementById('N')?.value;
+    const phosphorus  = document.getElementById('P')?.value;
+    const potassium   = document.getElementById('K')?.value;
+    const farmArea    = document.getElementById('area')?.value;
+    const selectedState = document.getElementById('state')?.value;
+    const selectedCrop  = document.getElementById('crop')?.value;
 
-    console.log("Form inputs gathered:", {rainfall, temperature, humidity, N, P, K, area, state, crop});
+    if (!checkFormValidityForPredict(true)) return;
 
-    if (!checkFormValidityForPredict(true)) {
-        // Validation messages are shown inline via triggerUI=true
-        return;
-    }
-
-    // Crop-State Combination Validation
-    const validCropsForState = stateCropMapping[state];
-    if (validCropsForState && !validCropsForState.includes(crop)) {
-        const suggestions = validCropsForState.slice(0, 5).join(', ');
-        const proceed = confirm(
-            `⚠️ "${crop}" is not commonly grown in ${state}.\n\n` +
-            `Prediction may not be accurate.\n\n` +
-            `Crops commonly grown in ${state}:\n${suggestions}\n\n` +
-            `Do you still want to proceed?`
+    // Warn if the crop isn't typically grown in that state, but let the
+    // farmer proceed — they might know something we don't.
+    const commonCropsForState = stateCropMapping[selectedState];
+    if (commonCropsForState && !commonCropsForState.includes(selectedCrop)) {
+        const topSuggestions = commonCropsForState.slice(0, 5).join(', ');
+        const shouldProceed = confirm(
+            `⚠️ "${selectedCrop}" isn't commonly grown in ${selectedState}.\n\n` +
+            `The prediction might be less accurate.\n\n` +
+            `Common crops for ${selectedState}: ${topSuggestions}\n\n` +
+            `Continue anyway?`
         );
-        if (!proceed) return;
+        if (!shouldProceed) return;
     }
 
-    const payload = {
-        rainfall: parseFloat(rainfall),
+    const cropInputPayload = {
+        rainfall:    parseFloat(rainfall),
         temperature: parseFloat(temperature),
-        humidity: parseFloat(humidity),
-        N: parseFloat(N),
-        P: parseFloat(P),
-        K: parseFloat(K),
-        area: parseFloat(area),
-        state: state,
-        crop: crop
+        humidity:    parseFloat(humidity),
+        N:           parseFloat(nitrogen),
+        P:           parseFloat(phosphorus),
+        K:           parseFloat(potassium),
+        area:        parseFloat(farmArea),
+        state:       selectedState,
+        crop:        selectedCrop,
     };
-    const isCommonCropInState = !validCropsForState || validCropsForState.includes(crop);
-
-    // STEP 9: DEBUG LOGS
-    console.log("Payload:", payload);
+    const isCommonCropInState = !commonCropsForState || commonCropsForState.includes(selectedCrop);
 
     try {
         if (predictBtn) {
@@ -561,130 +542,113 @@ async function predict(event) {
             predictBtn.innerHTML = '<span class="btn-text">Predicting...</span>';
         }
 
-        // Get Auth Token (Required by Backend)
-        let token = null;
+        // Pull the token from storage. If missing, the 401 handler below
+        // will redirect to login automatically.
+        let authToken = null;
         try {
-            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-            token = currentUser ? currentUser.token : null;
-        } catch (authErr) {
-            console.error("Auth token retrieval failed:", authErr);
+            const sessionData = JSON.parse(localStorage.getItem('currentUser'));
+            authToken = sessionData?.token ?? null;
+        } catch {
+            // Corrupted localStorage entry — treat as logged out
         }
 
-        console.log("Using token:", token ? "Token present" : "No token");
-
-        // STEP 3: API CALL
-        console.log("Sending request to:", `${API_BASE_URL}/predict`);
-        console.log("Payload:", payload);
-        
         const response = await fetch(`${API_BASE_URL}/predict`, {
-            method: "POST",
-            headers: { 
-                "Content-Type": "application/json",
-                "Authorization": token ? `Bearer ${token}` : "" 
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': authToken ? `Bearer ${authToken}` : '',
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(cropInputPayload),
         });
 
-        // STEP 5: RESPONSE HANDLING
-        console.log("API Response Status:", response.status);
         if (response.ok) {
-            const data = await response.json();
-            console.log("Response:", data);
-            // STEP 9: DEBUG LOGS
-            console.log("Response:", data);
+            const yieldResult = await response.json();
 
-            // STEP 6: UPDATE UI
-            const resultValue = document.getElementById('resultValue');
-            const totalYield = document.getElementById('totalYield');
-            const confidenceEl = document.getElementById('confidence');
-            const resultSection = document.getElementById('resultSection');
+            const yieldPerHectare = yieldResult.predicted_yield != null
+                ? (yieldResult.predicted_yield / 1000).toFixed(2)
+                : '--';
+            const totalFarmYield = yieldResult.predicted_yield != null
+                ? (yieldResult.predicted_yield / 1000) * cropInputPayload.area
+                : 0;
 
-            if (resultValue) {
-                resultValue.textContent = (data.predicted_yield != null) ? data.predicted_yield.toFixed(2) : "--";
+            const resultValueEl  = document.getElementById('resultValue');
+            const totalYieldEl   = document.getElementById('totalYield');
+            const confidenceEl   = document.getElementById('confidence');
+            const resultSection  = document.getElementById('resultSection');
+
+            if (resultValueEl) resultValueEl.textContent = yieldPerHectare;
+            if (totalYieldEl) {
+                totalYieldEl.textContent = totalFarmYield > 0
+                    ? formatNumber(totalFarmYield.toFixed(0)) + ' T'
+                    : '-- T';
             }
-            if (totalYield) {
-                const total = (data.predicted_yield != null) ? data.predicted_yield * payload.area : 0;
-                totalYield.textContent = total > 0 ? formatNumber(total.toFixed(0)) + ' T' : "-- T";
-            }
+
             if (confidenceEl) {
-                const shouldShowLowConfidence = (!isCommonCropInState) || (data.is_valid_combo === false);
-                const confScore = shouldShowLowConfidence ? 75 : 90;
-                confidenceEl.textContent = `${confScore}%`;
-                
-                // User Feedback & Color Change
+                const isLowConfidence = !isCommonCropInState || yieldResult.is_valid_combo === false;
+                confidenceEl.textContent = isLowConfidence ? '75%' : '90%';
+
                 const feedbackEl = document.getElementById('confidenceFeedback');
                 if (feedbackEl) {
                     feedbackEl.style.display = 'block';
-                    if (!shouldShowLowConfidence) {
-                        feedbackEl.textContent = '✔ High confidence prediction based on known agricultural data.';
-                        feedbackEl.style.color = '#4ade80';
+                    if (!isLowConfidence) {
+                        feedbackEl.textContent      = '✔ High confidence — this crop/state combo has strong historical data.';
+                        feedbackEl.style.color      = '#4ade80';
                         feedbackEl.style.backgroundColor = 'rgba(74, 222, 128, 0.1)';
-                        confidenceEl.style.color = '#4ade80';
+                        confidenceEl.style.color    = '#4ade80';
                     } else {
-                        feedbackEl.textContent = '⚠ Limited historical data for this crop in the selected state. Prediction may be less accurate.';
-                        feedbackEl.style.color = '#fbbf24';
+                        feedbackEl.textContent      = '⚠ Limited data for this region — treat the estimate as a rough guide.';
+                        feedbackEl.style.color      = '#fbbf24';
                         feedbackEl.style.backgroundColor = 'rgba(251, 191, 36, 0.1)';
-                        confidenceEl.style.color = '#fbbf24';
+                        confidenceEl.style.color    = '#fbbf24';
                     }
                 }
             }
-            
+
             if (resultSection) {
                 resultSection.classList.add('show');
-                resultSection.style.display = 'block'; // Ensure visibility
+                resultSection.style.display = 'block';
             }
-            
 
-
-            // Generate Recommendations
-            const recommendationsBox = document.getElementById('recommendationsBox');
+            const recommendationsBox  = document.getElementById('recommendationsBox');
             const recommendationsList = document.getElementById('recommendationsList');
             
             if (recommendationsBox && recommendationsList) {
                 recommendationsList.innerHTML = '';
-                const insights = [...(data.warnings || [])];
-                
-                if (payload.N < 40) insights.push("Nitrogen level is low. Consider applying nitrogen-rich fertilizers.");
-                if (payload.rainfall < 100) insights.push("Low rainfall detected. Consider supplementary irrigation for better yield.");
-                if (payload.humidity > 80) insights.push("High humidity increases risk of crop disease. Monitor for pests/fungus.");
-                if (payload.temperature > 35) insights.push("High temperature may cause heat stress to crops.");
-                
-                if (insights.length > 0) {
-                    insights.forEach(text => {
+
+                // Start with any warnings the model returned, then add rule-based tips
+                const farmingInsights = [...(yieldResult.warnings || [])];
+
+                if (cropInputPayload.N < 40)          farmingInsights.push('Nitrogen is on the low side — a top-dress application before flowering could help.');
+                if (cropInputPayload.rainfall < 100)  farmingInsights.push('Low rainfall expected — plan for supplementary irrigation at critical growth stages.');
+                if (cropInputPayload.humidity > 80)   farmingInsights.push('High humidity raises disease risk — keep an eye out for fungal issues.');
+                if (cropInputPayload.temperature > 35) farmingInsights.push('Heat stress is possible above 35°C — mulching can help retain soil moisture.');
+
+                if (farmingInsights.length > 0) {
+                    farmingInsights.forEach(tip => {
                         const li = document.createElement('li');
-                        li.textContent = text;
+                        li.textContent = tip;
                         recommendationsList.appendChild(li);
                     });
                 } else {
                     const li = document.createElement('li');
-                    li.textContent = "Optimal conditions detected for this crop profile.";
+                    li.textContent = 'Conditions look good for this crop. No major concerns detected.';
                     recommendationsList.appendChild(li);
                 }
             }
 
-            // STEP 7: SAFE CHART UPDATE
-            try {
-                updateChartsImmediately();
-            } catch (chartErr) {
-                console.error("Charts failed to update, but prediction is valid.");
-            }
+            try { updateChartsImmediately(); } catch { /* charts are optional */ }
 
-            // Intentionally no success banner on prediction (user requested cleaner UI)
         } else if (response.status === 401) {
-            // STEP 8: ERROR HANDLING - Auth failure
-            console.error("Authentication failed: Session expired or invalid");
-            alert("Your session has expired. Please log in again to continue.");
-            logout(); // Redirect to login
+            alert('Your session has expired — please log in again.');
+            logout();
         } else {
-            // STEP 8: ERROR HANDLING - Other server errors
-            const errData = await response.json().catch(() => ({ detail: "Unknown error" }));
-            console.error("API Error:", errData);
-            alert("Prediction failed: " + (errData.detail || "Server error"));
+            const errorBody = await response.json().catch(() => ({ detail: 'Unknown server error' }));
+            alert('Prediction failed: ' + (errorBody.detail || 'Something went wrong on the server.'));
         }
-    } catch (error) {
-        // STEP 8: ERROR HANDLING
-        console.error("Network Error:", error);
-        alert("Connection refused. Please ensure the backend server is running on http://127.0.0.1:8000");
+
+    } catch (networkError) {
+        console.error('Network error during prediction:', networkError);
+        alert('Could not reach the server. Make sure the backend is running on http://127.0.0.1:8000');
     } finally {
         const predictBtn = document.getElementById('predictBtn');
         if (predictBtn) {
@@ -742,11 +706,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Protection logic
     if (pageName === 'dashboard.html' && !user) {
-        window.location.replace('modern-login.html');
+        window.location.replace('login.html');
         return;
     }
 
-    if (pageName === 'modern-login.html' && user) {
+    if (pageName === 'login.html' && user) {
         window.location.replace('dashboard.html');
         return;
     }
@@ -765,20 +729,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Initialize Footer Reveal
     initFooterReveal();
 
-    // ATTACH PREDICTION FORM (Highest Priority)
     const predictionForm = document.getElementById('prediction-form');
     if (predictionForm) {
-        console.log("Prediction form found, attaching handler...");
         predictionForm.addEventListener('submit', predict);
     }
 
-    // Update Nav button to point to dashboard
-        // Update Nav button to point to dashboard
-        const authBtn = document.getElementById('auth-btn');
-        if (authBtn) {
-            authBtn.textContent = 'Dashboard';
-            authBtn.href = 'dashboard.html';
-        }
+    const authBtn = document.getElementById('auth-btn');
+    if (authBtn) {
+        authBtn.textContent = 'Dashboard';
+        authBtn.href = 'dashboard.html';
+    }
 
         // Handle logout button independent of authBtn
         let logoutBtn = document.getElementById('logout-btn');
@@ -882,7 +842,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (isNaN(val)) {
             if (input.required) {
                 input.classList.add('input-invalid');
-                if (msgEl) msgEl.textContent = 'This field is required';
+                if (msgEl) msgEl.textContent = 'This field is required.';
             } else {
                 input.classList.remove('input-invalid');
                 if (msgEl) msgEl.textContent = '';
@@ -892,13 +852,13 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         if (val < min || val > max) {
             input.classList.add('input-invalid');
-            if (msgEl) msgEl.textContent = 'Input out of realistic range. Please enter valid agricultural data.';
+            if (msgEl) msgEl.textContent = `Value must be between ${min} and ${max}.`;
             return false;
-        } else {
-            input.classList.remove('input-invalid');
-            if (msgEl) msgEl.textContent = '';
-            return true;
         }
+
+        input.classList.remove('input-invalid');
+        if (msgEl) msgEl.textContent = '';
+        return true;
     }
 
     function clampInput(input) {
@@ -950,8 +910,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         btn.disabled = !isValid;
     }
 
-    // Initial check
-    // Initial check (disabled to prevent showing empty field errors on load)
+    // Don't run validity check on load — empty fields would all turn red
+    // before the user has typed anything, which feels aggressive.
     // checkFormValidity();
 
     // Smooth scrolling for in-page anchors (avoids querySelector('#') on href="#")
@@ -1049,7 +1009,8 @@ function getCropOptions() {
     ];
 }
 
-// Script to handle Chart.js integration and dynamic updates
+// Charts are stored on window so the predict() function can update them
+// from outside initCharts()'s closure.
 window.barChart = null;
 window.pieChart = null;
 
@@ -1228,7 +1189,7 @@ function updateChartsImmediately() {
     const hum = parseFloat(document.getElementById('humidity')?.value) || 0;
 
     window.barChart.data.datasets[0].data = [n, p, k];
-    window.barChart.update('none'); // Update without animation for performance in real-time
+    window.barChart.update('none'); // 'none' skips animation — instant feedback while typing
 
     window.pieChart.data.datasets[0].data = [rain, temp, hum];
     window.pieChart.update('none');
@@ -1236,7 +1197,7 @@ function updateChartsImmediately() {
 
 let chartUpdateTimeout;
 function updateCharts() {
-    // Debounced update for performance while typing
+    // Debounce so we're not redrawing on every single keypress
     clearTimeout(chartUpdateTimeout);
     chartUpdateTimeout = setTimeout(updateChartsImmediately, 100);
 }
