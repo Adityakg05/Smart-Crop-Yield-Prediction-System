@@ -7,8 +7,14 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
+    disk:
+      name: crop-yield-data
+      mountPath: /opt/render/project/data
+      sizeGB: 1
     envVars:
       - key: SECRET_KEY
         generateValue: true      # Render auto-generates a secure random value
       - key: PYTHON_VERSION
         value: 3.11.0
+      - key: RENDER
+        value: "true"

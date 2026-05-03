@@ -13,7 +13,12 @@ from sqlalchemy.orm import Session, sessionmaker
 
 
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-_DB_PATH = os.path.join(_BASE_DIR, '..', 'database', 'crop_yield.db')
+
+# Use Render's persistent disk for production, local path for development
+if os.getenv('RENDER'):  # Running on Render
+    _DB_PATH = '/opt/render/project/data/crop_yield.db'
+else:  # Running locally
+    _DB_PATH = os.path.join(_BASE_DIR, '..', 'database', 'crop_yield.db')
 
 os.makedirs(os.path.dirname(_DB_PATH), exist_ok=True)
 
