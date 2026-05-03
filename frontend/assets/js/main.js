@@ -358,6 +358,9 @@ async function handleSignup(event) {
     }
 
     try {
+        console.log('Attempting signup to:', `${API_BASE_URL}/register`);
+        console.log('Payload:', { full_name: name, email, username: email });
+        
         const response = await fetch(`${API_BASE_URL}/register`, {
             method: 'POST',
             headers: {
@@ -371,17 +374,24 @@ async function handleSignup(event) {
             })
         });
 
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+
         if (response.ok) {
+            const data = await response.json();
+            console.log('Response data:', data);
+            
             // Clear any existing session to ensure fresh login
             localStorage.clear();
             sessionStorage.clear();
             
             showAlert('✓ Account created! Redirecting to login...', 'success', 'signup');
             setTimeout(() => {
-                window.location.href = 'login.html';
+                window.location.replace('login.html');
             }, 1500);
         } else {
             const error = await response.json();
+            console.log('Error response:', error);
             showAlert('✗ ' + (error.detail || 'Registration failed'), 'error', 'signup');
         }
     } catch (error) {
