@@ -4,9 +4,13 @@
     { "src": "frontend/**", "use": "@vercel/static" }
   ],
   "routes": [
-    { "src": "/",           "dest": "/frontend/pages/index.html" },
-    { "src": "/login",      "dest": "/frontend/pages/login.html" },
-    { "src": "/dashboard",  "dest": "/frontend/pages/dashboard.html" },
-    { "src": "/(.*)",       "dest": "/frontend/$1" }
+    { "src": "/",              "dest": "/frontend/pages/index.html" },
+    { "src": "/login",         "dest": "/frontend/pages/login.html" },
+    { "src": "/dashboard",     "dest": "/frontend/pages/dashboard.html" },
+    { "src": "/login.html",     "dest": "/frontend/pages/login.html" },
+    { "src": "/dashboard.html", "dest": "/frontend/pages/dashboard.html" },
+    { "src": "/index.html",     "dest": "/frontend/pages/index.html" },
+    { "src": "/assets/(.*)",    "dest": "/frontend/assets/$1" },
+    { "src": "/(.*)",          "dest": "/frontend/pages/$1" }
   ]
 }
