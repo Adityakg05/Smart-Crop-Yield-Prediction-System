@@ -32,13 +32,13 @@ async def lifespan(app: FastAPI):
     dataset_path = os.path.join(
         os.path.dirname(__file__), '..', 'data', 'dataset.csv'
     )
-    print("Starting up — training crop yield model...")
+    print("Starting up - training crop yield model...")
     try:
         model_instance.train(dataset_path)
     except Exception as exc:
         # Don't crash the whole server over a training failure;
         # the dummy fallback inside train() keeps the API alive.
-        print(f"Warning: model training failed — {exc}")
+        print(f"Warning: model training failed - {exc}")
     yield
     print("Shutting down.")
 

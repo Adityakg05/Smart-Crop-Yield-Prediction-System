@@ -234,9 +234,9 @@ class CropYieldModel:
         Full training pipeline.  Falls back to a tiny synthetic dataset if
         anything goes wrong so the API keeps running even with a bad CSV.
         """
-        print("\n" + "─" * 60)
+        print("\n" + "-" * 60)
         print("  Training crop yield model")
-        print("─" * 60)
+        print("-" * 60)
 
         try:
             raw_df = pd.read_csv(csv_path)
@@ -296,10 +296,10 @@ class CropYieldModel:
             self.metrics = {"rmse": float(rmse), "r2": float(r2)}
 
             print(f"  R²: {r2:.4f}  |  RMSE: {rmse:.4f}")
-            print("─" * 60 + "\n")
+            print("-" * 60 + "\n")
 
         except Exception as exc:
-            print(f"  Training failed ({exc}) — falling back to synthetic data")
+            print(f"  Training failed ({exc}) - falling back to synthetic data")
             self._train_with_synthetic_fallback()
 
 

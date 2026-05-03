@@ -392,28 +392,14 @@ async function handleSignup(event) {
         });
 
         if (response.ok) {
-            const data = await response.json();
-            let token = data.access_token;
-            if (!token) {
-                showAlert('✗ Authentication error: No token received', 'error', 'signup');
-                return;
-            }
-
-            let saved = await saveUserSession(token);
-            if (!saved) {
-                token = await fetchTokenWithPassword(email, password);
-                if (token) {
-                    saved = await saveUserSession(token);
-                }
-            }
-
-            if (!saved) {
-                showAlert('✗ Account created but auto sign-in failed. Please sign in with your email and password.', 'error', 'signup');
-                return;
-            }
-
-            showAlert('✓ Account created! Redirecting...', 'success', 'signup');
-            navigateToDashboard();
+            // Clear any existing session to ensure fresh login
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            showAlert('✓ Account created! Redirecting to login...', 'success', 'signup');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1500);
         } else {
             const error = await response.json();
             showAlert('✗ ' + (error.detail || 'Registration failed'), 'error', 'signup');
@@ -537,6 +523,7 @@ async function predict(event) {
     const isCommonCropInState = !commonCropsForState || commonCropsForState.includes(selectedCrop);
 
     try {
+        const predictBtn = document.getElementById('predictBtn');
         if (predictBtn) {
             predictBtn.disabled = true;
             predictBtn.innerHTML = '<span class="btn-text">Predicting...</span>';
@@ -736,8 +723,13 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     const authBtn = document.getElementById('auth-btn');
     if (authBtn) {
-        authBtn.textContent = 'Dashboard';
-        authBtn.href = 'dashboard.html';
+        if (user) {
+            authBtn.textContent = 'Dashboard';
+            authBtn.href = 'dashboard.html';
+        } else {
+            authBtn.textContent = 'Login';
+            authBtn.href = 'login.html';
+        }
     }
 
         // Handle logout button independent of authBtn
