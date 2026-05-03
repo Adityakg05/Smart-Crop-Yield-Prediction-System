@@ -20,10 +20,15 @@ from sqlalchemy.orm import Session, sessionmaker
 # ── Database setup ───────────────────────────────────────────────────────────
 
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+_DB_PATH = os.path.join(_BASE_DIR, '..', 'database', 'crop_yield.db')
+
+# Ensure the database directory exists, otherwise SQLite will throw an 
+# "unable to open database file" error on some servers (like Render).
+os.makedirs(os.path.dirname(_DB_PATH), exist_ok=True)
 
 # SQLite is chosen because it requires zero configuration or external servers.
 # It's perfect for a localized prediction tool where the write load is low.
-DATABASE_URL = f"sqlite:///{os.path.join(_BASE_DIR, '..', 'database', 'crop_yield.db')}"
+DATABASE_URL = f"sqlite:///{_DB_PATH}"
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

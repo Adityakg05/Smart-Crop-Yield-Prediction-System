@@ -28,8 +28,8 @@ backend/database/*.db
 *.sqlite
 *.sqlite3
 
-# ── Dataset (large binary, share via Google Drive / DVC instead) ───────────────
-backend/data/*.csv
+# ── Dataset (small enough to version in Git for this project) ──────────────────
+# backend/data/*.csv
 backend/data/*.xlsx
 backend/data/*.xls
 backend/data/*.parquet
