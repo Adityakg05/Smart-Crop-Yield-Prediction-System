@@ -708,8 +708,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         const userAvatarEl = document.getElementById('userAvatar');
         const userGreeting = document.getElementById('userGreeting');
         
-        if (userNameEl) userNameEl.textContent = user.name || 'Farmer';
-        if (userAvatarEl && user.name) userAvatarEl.textContent = user.name.charAt(0).toUpperCase();
+        let displayName = user.name || 'Farmer';
+        if (displayName.includes('@')) {
+            displayName = displayName.split('@')[0];
+        }
+        displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+
+        if (userNameEl) userNameEl.textContent = displayName;
+        if (userAvatarEl && displayName) userAvatarEl.textContent = displayName.charAt(0).toUpperCase();
         if (userGreeting) userGreeting.style.display = 'flex';
     }
 
