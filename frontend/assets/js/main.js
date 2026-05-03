@@ -1,15 +1,7 @@
-// In production, set window.APP_CONFIG = { apiUrl: 'https://your-app.onrender.com' }
-// in a <script> tag before this file loads (see each HTML page's <head>).
-// Locally it falls back to 127.0.0.1:8000 automatically.
 const API_BASE_URL = (window.APP_CONFIG && window.APP_CONFIG.apiUrl)
     ? window.APP_CONFIG.apiUrl
     : 'http://127.0.0.1:8000';
 
-/**
- * ================================
- * TYPING ANIMATION (Hero Section)
- * ================================
- */
 function initTypingAnimation() {
     const el = document.getElementById('typingText');
     const cursor = document.getElementById('typingCursor');
@@ -29,14 +21,9 @@ function initTypingAnimation() {
         }
     }
 
-    setTimeout(type, 800); // slight initial delay for page load feel
+    setTimeout(type, 800);
 }
 
-/**
- * ================================
- * PREVIEW YIELD ANIMATION
- * ================================
- */
 function initPreviewYieldAnimation() {
     const el = document.getElementById('previewYieldValue');
     if (!el) return;
@@ -60,11 +47,6 @@ function initPreviewYieldAnimation() {
     requestAnimationFrame(animate);
 }
 
-/**
- * ================================
- * COUNT-UP ANIMATION (Hero Stats)
- * ================================
- */
 function initCountUp() {
     const statNumbers = document.querySelectorAll('.stat-number[data-count]');
     if (!statNumbers.length) return;
@@ -84,13 +66,11 @@ function initCountUp() {
                 current = target;
                 clearInterval(timer);
             }
-            // Show one decimal only if target has decimals
             const display = Number.isInteger(target) ? Math.round(current) : current.toFixed(1);
             el.textContent = display + suffix;
         }, stepTime);
     };
 
-    // Use IntersectionObserver so counts trigger when in view
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -419,10 +399,21 @@ function logout() {
     try {
         localStorage.clear();
         sessionStorage.clear();
+        
+        // Clear any potential service worker caches
+        if ('caches' in window) {
+            caches.keys().then(names => {
+                names.forEach(name => {
+                    caches.delete(name);
+                });
+            });
+        }
     } catch (e) {
         /* ignore storage errors (private mode, etc.) */
     }
-    window.location.href = 'login.html';
+    
+    // Use replace to prevent back button and redirect to landing page
+    window.location.replace('index.html');
 }
 
 /**

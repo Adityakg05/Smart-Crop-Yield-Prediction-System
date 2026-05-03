@@ -20,15 +20,10 @@ from .auth import (
 )
 from .model import model_instance
 
-
-# ── Startup / Shutdown ──────────────────────────────────────────────────────
-
-# Lifespan events are cleaner than the deprecated @app.on_event("startup") 
-# because they handle the full context (startup/shutdown) in one readable block.
+# Train model at startup so requests hit a ready model
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Train the ML model once at startup so every request hits a ready model."""
-    # Path walks up from backend/app → backend → data/
+    """Train model at startup so requests hit a ready model."""
     dataset_path = os.path.join(
         os.path.dirname(__file__), '..', 'data', 'dataset.csv'
     )
@@ -36,30 +31,19 @@ async def lifespan(app: FastAPI):
     try:
         model_instance.train(dataset_path)
     except Exception as exc:
-        # Don't crash the whole server over a training failure;
-        # the dummy fallback inside train() keeps the API alive.
         print(f"Warning: model training failed - {exc}")
     yield
     print("Shutting down.")
-
-
-# ── App setup ───────────────────────────────────────────────────────────────
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 app = FastAPI(
     title="Smart Crop Yield Prediction System",
-    description=(
-        "Predicts crop yield from soil and weather inputs. "
-        "Requires JWT authentication for prediction endpoints."
-    ),
+    description="Predicts crop yield from soil and weather inputs. Requires JWT authentication.",
     version="2.0.0",
     lifespan=lifespan,
 )
 
-# During development, allow_origins=["*"] prevents the classic CORS block 
-# when opening index.html directly from the file system. 
-# Production builds should obviously specify the exact frontend domain.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -68,21 +52,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve the frontend folder so /frontend/pages/dashboard.html works directly
 frontend_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'frontend')
 app.mount("/frontend", StaticFiles(directory=frontend_dir, html=True), name="frontend")
 
 
 @app.get("/dashboard", include_in_schema=False)
 async def redirect_to_dashboard():
-    """Convenience redirect — /dashboard is easier to remember than the full path."""
+    """Convenience redirect to dashboard."""
     return RedirectResponse(url="/frontend/pages/dashboard.html", status_code=302)
 
-
-# ── Request / Response schemas ───────────────────────────────────────────────
-
 class CropPredictionInput(BaseModel):
-    """Everything the model needs to make a yield estimate."""
+    """Input data for crop yield prediction."""
     rainfall:    float = Field(..., ge=0,   le=500,  description="mm of rainfall")
     temperature: float = Field(..., ge=0,   le=50,   description="°C")
     humidity:    float = Field(..., ge=10,  le=100,  description="%")
@@ -95,7 +75,7 @@ class CropPredictionInput(BaseModel):
 
 
 class CropPredictionResult(BaseModel):
-    """What we send back to the frontend after a successful prediction."""
+    """Prediction response data."""
     predicted_yield:  float
     yield_min:        float
     yield_max:        float
@@ -103,17 +83,11 @@ class CropPredictionResult(BaseModel):
     warnings:         List[str] = []
     is_valid_combo:   bool = True
 
-
-# ── Auth helpers (used as FastAPI dependencies) ──────────────────────────────
-
 async def get_authenticated_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
 ) -> User:
-    """
-    Decode the JWT and look up the user.  Raises 401 if anything smells off —
-    expired token, tampered signature, unknown username, etc.
-    """
+    """Decode JWT and validate user."""
     bad_credentials = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Session expired or invalid — please log in again",
@@ -137,17 +111,14 @@ async def get_authenticated_user(
 async def require_active_user(
     current_user: User = Depends(get_authenticated_user),
 ) -> User:
-    """Blocks deactivated accounts from using protected endpoints."""
+    """Block deactivated accounts."""
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Account is deactivated")
     return current_user
 
-
-# ── Auth endpoints ───────────────────────────────────────────────────────────
-
 @app.post("/register", response_model=Token)
 async def register_new_user(new_user: UserCreate, db: Session = Depends(get_db)):
-    """Sign up a new farmer account and return a ready-to-use access token."""
+    """Create new user account."""
     if get_user_by_username(db, username=new_user.username):
         raise HTTPException(status_code=400, detail="Username already taken")
     if get_user_by_email(db, email=new_user.email):
@@ -163,10 +134,7 @@ async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
-    """
-    Standard OAuth2 password flow.  The frontend sends email as `username`
-    because that's what farmers remember, so authenticate_user handles both.
-    """
+    """User login - accepts email as username."""
     verified_user = authenticate_user(db, form_data.username, form_data.password)
     if not verified_user:
         raise HTTPException(
@@ -184,7 +152,7 @@ async def login(
 
 @app.get("/users/me")
 async def get_my_profile(current_user: User = Depends(require_active_user)):
-    """Returns just enough profile info for the navbar greeting."""
+    """Get current user profile."""
     return {
         "username":   current_user.username,
         "email":      current_user.email,
@@ -193,24 +161,18 @@ async def get_my_profile(current_user: User = Depends(require_active_user)):
         "last_login": current_user.last_login,
     }
 
-
-# ── Prediction endpoint ──────────────────────────────────────────────────────
-
 @app.post("/predict", response_model=CropPredictionResult)
 async def predict_crop_yield(
     crop_input: CropPredictionInput,
     current_user: User = Depends(require_active_user),
 ):
-    """
-    Core endpoint.  The model works in kg/ha internally; the frontend converts
-    to t/ha for display, so we return raw kg/ha here.
-    """
+    """Predict crop yield from input data."""
     try:
         input_dict = crop_input.dict()
         prediction_result = model_instance.predict(input_dict)
 
-        # JSON can't serialize NaN or Inf — clamp those to 0 rather than crash
         def sanitize_float(val: float) -> float:
+            """Handle NaN/Inf values for JSON serialization."""
             if isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
                 return 0.0
             return val
@@ -229,15 +191,9 @@ async def predict_crop_yield(
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Prediction failed: {exc}")
 
-
-# ── Utility endpoints ────────────────────────────────────────────────────────
-
 @app.get("/metrics")
 async def get_model_metrics():
-    """
-    Lets the landing page show real accuracy figures instead of hardcoded ones.
-    Only available after the model has been trained at startup.
-    """
+    """Get model performance metrics."""
     return {
         "rmse":     model_instance.metrics.get("rmse"),
         "r2_score": model_instance.metrics.get("r2"),
@@ -246,6 +202,7 @@ async def get_model_metrics():
 
 @app.get("/health")
 async def health_check():
+    """Health check endpoint."""
     return {
         "status":        "healthy",
         "model_trained": model_instance.is_trained,
@@ -255,13 +212,11 @@ async def health_check():
 
 @app.get("/")
 async def root():
+    """API root endpoint."""
     return {
         "message": "Smart Crop Yield Prediction API v2.0",
         "docs":    "/docs",
     }
-
-
-# Allow running directly with `python main.py` during local dev
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)

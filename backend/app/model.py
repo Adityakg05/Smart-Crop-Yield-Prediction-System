@@ -1,10 +1,4 @@
-"""
-model.py — CropYieldModel: training pipeline, prediction logic, and confidence scoring.
-
-The model is a RandomForest wrapped in a sklearn Pipeline so preprocessing
-(scaling, one-hot encoding) is bundled with the estimator. This way we can
-call .predict() on raw farmer inputs without a separate transform step.
-"""
+"""Crop yield prediction model with training and inference."""
 
 import numpy as np
 import pandas as pd
@@ -27,16 +21,10 @@ class CropYieldModel:
         ]
         self.target = 'yield'
 
-        # Build the preprocessing + estimator pipeline once at init time.
-        # handle_unknown='ignore' lets the model accept unseen state/crop
-        # combos at prediction time instead of crashing.
         numeric_transformer = Pipeline([
             ('imputer', SimpleImputer(strategy='mean')),
             ('scaler',  StandardScaler()),
         ])
-        # OneHotEncoding is essential for 'state' and 'crop' features.
-        # It converts categorical labels into a numeric format that the model
-        # can process without assuming an artificial order between states or crops.
         categorical_transformer = Pipeline([
             ('imputer', SimpleImputer(strategy='most_frequent')),
             ('onehot',  OneHotEncoder(handle_unknown='ignore', sparse_output=False)),
@@ -46,10 +34,6 @@ class CropYieldModel:
             ('cat', categorical_transformer, self.categorical_features),
         ])
 
-        # We use a RandomForestRegressor because it's an ensemble method that
-        # handles the nonlinear relationships in agricultural data (e.g., the
-        # interaction between rainfall and temperature) much better than linear models.
-        # It's also robust to the noise in our synthetic environmental features.
         self.pipeline = Pipeline([
             ('preprocessor', preprocessor),
             ('regressor',    RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1)),
@@ -57,29 +41,15 @@ class CropYieldModel:
 
         self.is_trained           = False
         self.metrics              = {"rmse": None, "r2": None}
-
-        # Populated after training — used to flag suspicious predictions
         self.training_ranges      = {}
-        self.seen_combinations    = set()   # (state, crop) pairs in the training data
+        self.seen_combinations    = set()
         self.seen_crops           = set()
         self.seen_states          = set()
         self.crop_influence_factors = {}
 
-
-    # ── Dataset preprocessing ────────────────────────────────────────────────
-
     def _build_training_records(self, raw_df: pd.DataFrame) -> pd.DataFrame:
-        """
-        The CSV has one row per district-year with separate columns for every
-        crop's yield, area, and production.  We pivot that into one row per
-        (district, year, crop) so the model sees each observation as independent.
+        """Transform CSV data to training format with synthetic environmental features."""
 
-        Environmental features (rainfall, temp, etc.) are not in the CSV, so
-        we synthesise them from crop-type priors plus Gaussian noise.  This is
-        a known limitation — real sensor data would improve accuracy significantly.
-        """
-
-        # Maps display name → (yield_col, area_col, production_col) in the CSV
         crop_column_map = {
             'Rice':         ('RICE YIELD (Kg per ha)',           'RICE AREA (1000 ha)',           'RICE PRODUCTION (1000 tons)'),
             'Wheat':        ('WHEAT YIELD (Kg per ha)',          'WHEAT AREA (1000 ha)',          'WHEAT PRODUCTION (1000 tons)'),
@@ -143,7 +113,6 @@ class CropYieldModel:
                 area_val  = row[area_col]
                 prod_val  = row[prod_col]
 
-                # Skip rows with zero or missing values — they'd just add noise
                 if not (
                     pd.notna(yield_val) and pd.notna(area_val) and pd.notna(prod_val)
                     and yield_val > 0 and area_val > 0 and prod_val > 0
@@ -159,7 +128,6 @@ class CropYieldModel:
                     'area':        float(area_val),
                     'production':  float(prod_val),
                     'year':        int(year),
-                    # Synthesised from priors + noise — independent of the yield target
                     'rainfall':    min(500, prior['rain_pref'] + np.random.normal(0, 80)),
                     'temperature': prior['temp_pref'] + np.random.normal(0, 7),
                     'humidity':    min(90, 65 + np.random.normal(0, 15)),
@@ -174,7 +142,7 @@ class CropYieldModel:
 
 
     def _clean_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Drop duplicates and rows with nulls in the columns the model actually uses."""
+        """Remove duplicates and invalid rows."""
         initial_count = len(df)
         df = df.drop_duplicates()
 
@@ -190,14 +158,7 @@ class CropYieldModel:
     def _balance_by_state(
         self, X_train: pd.DataFrame, y_train: pd.Series
     ) -> tuple:
-        """
-        Some states have far more historical records than others, which would
-        bias the model toward well-represented states.  We cap each state at
-        the minimum sample count so every region gets equal weight.
-
-        Important: this only touches training data — the test split stays as-is
-        so evaluation reflects the real-world data distribution.
-        """
+        """Balance training data by state to prevent bias."""
         X_train = X_train.reset_index(drop=True)
         y_train = y_train.reset_index(drop=True)
 

@@ -3,18 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Dashboard - Crop Yield Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/main.css?v=2">
     <!-- Production: replace the empty string with your Render URL -->
-    <script>window.APP_CONFIG = { apiUrl: 'https://crop-yield-api-8kx2.onrender.com' };</script>
+    <script>window.APP_CONFIG = { apiUrl: 'http://127.0.0.1:8000' };</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="../assets/js/main.js?v=2" defer></script>
     <script>
-        // Immediate, blocking auth check to prevent UI flash
+        // Immediate auth check to prevent access after logout
         if (!localStorage.getItem('currentUser')) {
-            window.location.replace('login.html');
+            window.location.replace('index.html');
         }
+        
+        // Prevent back button cache issue
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                if (!localStorage.getItem('currentUser')) {
+                    window.location.replace('index.html');
+                }
+            }
+        });
     </script>
 </head>
 <body class="dashboard-body">
